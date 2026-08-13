@@ -70,44 +70,104 @@
 
           <section>
             <h2>A coding agent starts <em>somewhere</em></h2>
-            <div class="cols">
-              <div class="panel">
-                <pre><code class="language-text" data-trim>
-$ cd my-project
-$ claude
-                </code></pre>
-                <p style="font-size: 0.65em" class="muted">
-                  You launch it in a folder, and that folder is its world
-                </p>
-              </div>
-              <div>
-                <p style="font-size: 0.8em">Context builds in layers:</p>
-                <ul style="font-size: 0.75em">
-                  <li><code>CLAUDE.md</code> / <code>AGENTS.md</code> — standing instructions</li>
-                  <li><span class="teal">Skills</span> — task know-how loaded on demand</li>
-                  <li>Files it reads as it works</li>
-                  <li>The conversation itself</li>
-                </ul>
-              </div>
-            </div>
+            <svg class="diagram" viewBox="0 0 920 410" role="img" aria-label="A terminal starting in a project folder feeds a context window that fills bottom-up with CLAUDE.md, skills, files read, and the conversation">
+              <defs>
+                <marker id="d1a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" fill="#4a4a4a" />
+                </marker>
+                <marker id="d1ac" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" fill="#e57368" />
+                </marker>
+              </defs>
+
+              <!-- terminal -->
+              <text x="145" y="252" text-anchor="middle" class="d-small d-muted">you start here</text>
+              <rect x="20" y="265" width="250" height="120" rx="10" class="d-box" />
+              <circle cx="42" cy="285" r="5" fill="#c95c54" />
+              <circle cx="60" cy="285" r="5" fill="#4a4a4a" />
+              <circle cx="78" cy="285" r="5" fill="#4a4a4a" />
+              <text x="42" y="325" class="d-mono">$ cd my-project</text>
+              <text x="42" y="357" class="d-mono">$ claude</text>
+
+              <!-- arrow into the window -->
+              <path d="M270 330 L336 330" class="d-wire-coral" marker-end="url(#d1ac)" />
+
+              <!-- context window -->
+              <text x="360" y="24" class="d-title">the context window</text>
+              <rect x="345" y="38" width="500" height="352" rx="14" fill="none" stroke="#4a4a4a" stroke-width="2" />
+
+              <rect x="362" y="322" width="466" height="52" rx="8" class="d-box-coral" />
+              <text x="380" y="354"><tspan class="d-mono">CLAUDE.md</tspan> · standing instructions</text>
+
+              <rect x="362" y="262" width="466" height="52" rx="8" class="d-box-teal" />
+              <text x="380" y="294">skills · loaded when a task matches</text>
+
+              <rect x="362" y="202" width="466" height="52" rx="8" class="d-box" />
+              <text x="380" y="234">files it reads while working</text>
+
+              <rect x="362" y="142" width="466" height="52" rx="8" class="d-box" />
+              <text x="380" y="174">the conversation so far</text>
+
+              <rect x="362" y="56" width="466" height="76" rx="8" fill="none" stroke="#4a4a4a" stroke-width="1.5" stroke-dasharray="7 6" />
+              <text x="595" y="100" text-anchor="middle" class="d-small d-muted">room left in the window</text>
+
+              <!-- session-time axis -->
+              <path d="M878 374 L878 66" class="d-wire" marker-end="url(#d1a)" />
+              <text x="892" y="220" transform="rotate(-90 892 220)" text-anchor="middle" class="d-small d-muted">builds up over the session</text>
+            </svg>
             <aside class="notes">
-              The agent bootstraps context from the filesystem: project instructions first, then
-              skills when a task matches, then whatever it reads while working. Context accretes —
-              it starts nearly empty and fills as the session goes.
+              The agent bootstraps context from the filesystem: project instructions first
+              (CLAUDE.md / AGENTS.md), then skills when a task matches, then whatever it reads
+              while working. Context accretes — it starts nearly empty and fills as the session
+              goes. The dashed space matters: the window is finite, which is the next slide.
             </aside>
           </section>
 
           <section>
             <h2>The problem</h2>
-            <ul>
-              <li>Your knowledge is <span class="accent">huge</span>: docs, wikis, tickets, code history, videos…</li>
-              <li>The context window is <span class="accent">small</span> and every token costs time and money</li>
-              <li>And your knowledge <em>changes</em>; the model's training data doesn't</li>
-            </ul>
-            <p class="statement" style="font-size: 0.95em; margin-top: 1em">
-              You can't stuff everything in.<br />
+            <svg class="diagram" viewBox="0 0 920 330" role="img" aria-label="A large growing pile of knowledge (docs, wikis, tickets, code history, videos, chat logs) cannot fit through a small context window">
+              <defs>
+                <marker id="d2ac" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" fill="#e57368" />
+                </marker>
+              </defs>
+
+              <!-- knowledge pile -->
+              <text x="185" y="28" text-anchor="middle" class="d-title">your knowledge</text>
+              <text x="185" y="54" text-anchor="middle" class="d-small d-muted">always growing, always changing</text>
+              <rect x="55" y="72" width="250" height="40" rx="8" class="d-box" />
+              <text x="180" y="98" text-anchor="middle" class="d-muted">docs &amp; wikis</text>
+              <rect x="30" y="118" width="220" height="40" rx="8" class="d-box" />
+              <text x="140" y="144" text-anchor="middle" class="d-muted">tickets</text>
+              <rect x="256" y="118" width="110" height="40" rx="8" class="d-box" />
+              <text x="311" y="144" text-anchor="middle" class="d-muted">chats</text>
+              <rect x="48" y="164" width="270" height="40" rx="8" class="d-box" />
+              <text x="183" y="190" text-anchor="middle" class="d-muted">code history</text>
+              <rect x="22" y="210" width="150" height="40" rx="8" class="d-box" />
+              <text x="97" y="236" text-anchor="middle" class="d-muted">videos</text>
+              <rect x="178" y="210" width="180" height="40" rx="8" class="d-box" />
+              <text x="268" y="236" text-anchor="middle" class="d-muted">meeting notes</text>
+              <text x="185" y="290" text-anchor="middle" class="d-small d-muted">millions of pages</text>
+
+              <!-- doesn't fit -->
+              <path d="M390 160 L580 160" class="d-wire-coral d-dashed" marker-end="url(#d2ac)" />
+              <text x="485" y="140" text-anchor="middle" class="d-coral d-title">doesn't fit</text>
+
+              <!-- context window -->
+              <rect x="620" y="115" width="240" height="95" rx="12" fill="none" stroke="#e57368" stroke-width="2" stroke-dasharray="7 6" />
+              <text x="740" y="158" text-anchor="middle">context window</text>
+              <text x="740" y="188" text-anchor="middle" class="d-small d-muted">hundreds of pages</text>
+              <text x="740" y="250" text-anchor="middle" class="d-small d-muted">and every page in it costs</text>
+              <text x="740" y="274" text-anchor="middle" class="d-small d-muted">time and money</text>
+            </svg>
+            <p class="statement" style="font-size: 0.9em; margin-top: 0.4em">
+              You can't stuff everything in.
               What if the model could <span class="teal">go look things up?</span>
             </p>
+            <aside class="notes">
+              Three pressures: the knowledge is huge, the window is small and costly per token, and
+              the knowledge keeps changing while the model's training data stands still.
+            </aside>
           </section>
         </section>
 
@@ -134,40 +194,153 @@ $ claude
 
           <section>
             <h2>The library analogy</h2>
-            <p class="statement" style="font-size: 1.0em">
-              I don't know everything in the library.<br />
+            <p class="statement" style="font-size: 0.95em">
+              I don't know everything in the library.
               I know how to <span class="accent">search</span> it.
             </p>
-            <ul style="font-size: 0.85em">
-              <li>Walk in with a question</li>
-              <li>Search the catalog &rarr; pull <em>one</em> book off the shelf</li>
-              <li>Read the relevant chapter &rarr; expert on that one topic, right now</li>
-              <li>Never need to know what the other million books say</li>
-            </ul>
+            <svg class="diagram" viewBox="0 0 920 340" role="img" aria-label="A catalog search points to one highlighted book on a shelf of many; you read one chapter and become an expert on that topic today">
+              <defs>
+                <marker id="d3at" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" fill="#4fb8a8" />
+                </marker>
+              </defs>
+
+              <!-- catalog search -->
+              <rect x="560" y="30" width="330" height="60" rx="12" class="d-box-teal" />
+              <circle cx="596" cy="60" r="11" fill="none" stroke="#4fb8a8" stroke-width="2.5" />
+              <path d="M604 68 L614 78" stroke="#4fb8a8" stroke-width="2.5" stroke-linecap="round" />
+              <text x="632" y="68" class="d-mono">"how do vectors work?"</text>
+              <text x="725" y="116" text-anchor="middle" class="d-small d-muted">the catalog knows where everything is</text>
+
+              <!-- dashed pointer to the one book -->
+              <path d="M560 70 C 430 90 350 120 302 168" class="d-wire-teal d-dashed" marker-end="url(#d3at)" />
+
+              <!-- shelf 1 -->
+              <line x1="40" y1="260" x2="540" y2="260" stroke="#4a4a4a" stroke-width="4" />
+              <g>
+                <rect x="52" y="192" width="24" height="68" rx="3" fill="#2a2e36" />
+                <rect x="80" y="180" width="20" height="80" rx="3" fill="#343943" />
+                <rect x="104" y="200" width="28" height="60" rx="3" fill="#2a2e36" />
+                <rect x="136" y="186" width="22" height="74" rx="3" fill="#3a3f4a" />
+                <rect x="162" y="196" width="26" height="64" rx="3" fill="#2a2e36" />
+                <rect x="192" y="178" width="20" height="82" rx="3" fill="#343943" />
+                <rect x="216" y="198" width="24" height="62" rx="3" fill="#3a3f4a" />
+                <rect x="244" y="188" width="22" height="72" rx="3" fill="#2a2e36" />
+                <!-- the one pulled book -->
+                <rect x="284" y="172" width="26" height="76" rx="3" fill="#c95c54" transform="rotate(-9 297 210)" />
+                <rect x="322" y="182" width="22" height="78" rx="3" fill="#343943" />
+                <rect x="348" y="194" width="26" height="66" rx="3" fill="#2a2e36" />
+                <rect x="378" y="184" width="20" height="76" rx="3" fill="#3a3f4a" />
+                <rect x="402" y="198" width="26" height="62" rx="3" fill="#343943" />
+                <rect x="432" y="180" width="22" height="80" rx="3" fill="#2a2e36" />
+                <rect x="458" y="192" width="26" height="68" rx="3" fill="#3a3f4a" />
+                <rect x="488" y="186" width="22" height="74" rx="3" fill="#2a2e36" />
+              </g>
+
+              <!-- shelf 2 -->
+              <line x1="40" y1="336" x2="540" y2="336" stroke="#4a4a4a" stroke-width="4" />
+              <g>
+                <rect x="56" y="284" width="24" height="52" rx="3" fill="#343943" />
+                <rect x="84" y="278" width="20" height="58" rx="3" fill="#2a2e36" />
+                <rect x="108" y="288" width="26" height="48" rx="3" fill="#3a3f4a" />
+                <rect x="138" y="280" width="22" height="56" rx="3" fill="#2a2e36" />
+                <rect x="164" y="286" width="24" height="50" rx="3" fill="#343943" />
+                <rect x="192" y="276" width="20" height="60" rx="3" fill="#3a3f4a" />
+                <rect x="216" y="288" width="26" height="48" rx="3" fill="#2a2e36" />
+                <rect x="246" y="282" width="22" height="54" rx="3" fill="#343943" />
+                <rect x="272" y="278" width="24" height="58" rx="3" fill="#2a2e36" />
+                <rect x="300" y="286" width="20" height="50" rx="3" fill="#3a3f4a" />
+                <rect x="324" y="280" width="26" height="56" rx="3" fill="#343943" />
+                <rect x="354" y="288" width="22" height="48" rx="3" fill="#2a2e36" />
+                <rect x="380" y="278" width="24" height="58" rx="3" fill="#3a3f4a" />
+                <rect x="408" y="286" width="20" height="50" rx="3" fill="#2a2e36" />
+                <rect x="432" y="282" width="26" height="54" rx="3" fill="#343943" />
+                <rect x="462" y="288" width="22" height="48" rx="3" fill="#3a3f4a" />
+                <rect x="488" y="280" width="24" height="56" rx="3" fill="#2a2e36" />
+              </g>
+
+              <!-- takeaway -->
+              <text x="725" y="200" text-anchor="middle" class="d-coral">pull <tspan font-style="italic">one</tspan> book</text>
+              <text x="725" y="232" text-anchor="middle">read one chapter</text>
+              <text x="725" y="264" text-anchor="middle">expert on that topic, <tspan class="d-coral">today</tspan></text>
+              <text x="725" y="308" text-anchor="middle" class="d-small d-muted">the other million books? never opened</text>
+            </svg>
             <aside class="notes">
               Key point: expertise-on-demand beats memorizing the collection. The librarian doesn't
               memorize books either — they're expert at *finding*. RAG makes the model a great
-              library patron.
+              library patron: walk in with a question, search the catalog, pull one book, read the
+              relevant chapter.
             </aside>
           </section>
 
           <section>
             <h2>The RAG loop</h2>
-            <div class="panel" style="font-size: 0.8em; text-align: center; padding: 1em">
-              <p>
-                <span class="accent">question</span> &rarr; <span class="teal">retrieve</span> top
-                matches &rarr; add them to the <span class="violet">context</span> &rarr; model
-                <span class="accent">answers</span> (with citations)
-              </p>
-            </div>
-            <ul style="font-size: 0.8em; margin-top: 0.8em">
-              <li>Knowledge lives <em>outside</em> the model — update it any time</li>
-              <li>Answers can cite their sources</li>
-              <li>Context stays small: only what this question needs</li>
-            </ul>
+            <svg class="diagram" viewBox="0 0 920 380" role="img" aria-label="RAG flow: a question goes to a retriever, which searches the knowledge store and returns top matches; question plus matches form the context; the model produces a grounded answer with citations">
+              <defs>
+                <marker id="d4a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" fill="#4a4a4a" />
+                </marker>
+              </defs>
+
+              <!-- 1 question -->
+              <rect x="20" y="120" width="180" height="64" rx="10" class="d-box-coral" />
+              <text x="110" y="159" text-anchor="middle">your question</text>
+
+              <path d="M200 152 L248 152" class="d-wire" marker-end="url(#d4a)" />
+              <circle cx="224" cy="128" r="14" fill="#1e2127" stroke="#4a4a4a" stroke-width="1.5" />
+              <text x="224" y="135" text-anchor="middle" class="d-small d-muted">1</text>
+
+              <!-- 2 retriever + store -->
+              <rect x="252" y="120" width="190" height="64" rx="10" class="d-box-teal" />
+              <text x="347" y="159" text-anchor="middle" class="d-teal">retriever</text>
+
+              <path d="M330 184 L330 244" class="d-wire" marker-end="url(#d4a)" />
+              <path d="M364 244 L364 184" class="d-wire" marker-end="url(#d4a)" />
+              <circle cx="310" cy="216" r="14" fill="#1e2127" stroke="#4a4a4a" stroke-width="1.5" />
+              <text x="310" y="223" text-anchor="middle" class="d-small d-muted">2</text>
+
+              <rect x="252" y="248" width="190" height="100" rx="10" class="d-box" />
+              <rect x="274" y="272" width="14" height="52" rx="2" fill="#3a3f4a" />
+              <rect x="292" y="266" width="12" height="58" rx="2" fill="#343943" />
+              <rect x="308" y="276" width="14" height="48" rx="2" fill="#c95c54" />
+              <rect x="326" y="270" width="12" height="54" rx="2" fill="#3a3f4a" />
+              <text x="388" y="294" text-anchor="middle">your</text>
+              <text x="388" y="320" text-anchor="middle">docs</text>
+              <text x="347" y="374" text-anchor="middle" class="d-small d-muted">lives outside the model · update any time</text>
+
+              <path d="M442 152 L490 152" class="d-wire" marker-end="url(#d4a)" />
+
+              <!-- 3 context -->
+              <rect x="494" y="76" width="200" height="152" rx="10" fill="none" stroke="#4a4a4a" stroke-width="2" />
+              <text x="594" y="64" text-anchor="middle" class="d-small d-muted">the context window</text>
+              <rect x="510" y="92" width="168" height="38" rx="6" class="d-box-coral" />
+              <text x="594" y="117" text-anchor="middle" class="d-small">question</text>
+              <rect x="510" y="138" width="168" height="38" rx="6" class="d-box-teal" />
+              <text x="594" y="163" text-anchor="middle" class="d-small">match · chapter 7</text>
+              <rect x="510" y="184" width="168" height="38" rx="6" class="d-box-teal" />
+              <text x="594" y="209" text-anchor="middle" class="d-small">match · page 212</text>
+              <circle cx="518" cy="128" r="14" fill="#1e2127" stroke="#4a4a4a" stroke-width="1.5" />
+              <text x="518" y="135" text-anchor="middle" class="d-small d-muted">3</text>
+
+              <path d="M694 152 L742 152" class="d-wire" marker-end="url(#d4a)" />
+
+              <!-- 4 model → answer -->
+              <rect x="746" y="120" width="150" height="64" rx="10" class="d-box-violet" />
+              <text x="821" y="159" text-anchor="middle" class="d-violet">model</text>
+
+              <path d="M821 184 L821 244" class="d-wire" marker-end="url(#d4a)" />
+              <circle cx="845" cy="216" r="14" fill="#1e2127" stroke="#4a4a4a" stroke-width="1.5" />
+              <text x="845" y="223" text-anchor="middle" class="d-small d-muted">4</text>
+
+              <rect x="716" y="248" width="192" height="72" rx="10" class="d-box" />
+              <text x="812" y="278" text-anchor="middle">grounded answer</text>
+              <text x="812" y="306" text-anchor="middle" class="d-small d-coral">cites chapter 7, page 212</text>
+            </svg>
             <aside class="notes">
-              (Diagram placeholder — we'll replace this text-arrow panel with a proper SVG flow
-              diagram during the content pass.)
+              Walk the numbers: (1) the question goes to a retriever, not straight to the model;
+              (2) the retriever searches the knowledge store, which lives outside the model and can
+              be updated any time; (3) only the top matches join the question in the context, so it
+              stays small; (4) the model answers grounded in what it just read and can cite it.
             </aside>
           </section>
         </section>
@@ -192,32 +365,115 @@ $ claude
 
           <section>
             <h2>"Restaurants near me"</h2>
-            <ul>
-              <li>Every restaurant is a point: <code>(lat, lng)</code>, just two numbers</li>
-              <li>"Near me" = smallest <span class="teal">distance</span> between points</li>
-              <li>A 2-dimensional <span class="accent">vector</span> locates anything on Earth</li>
-            </ul>
+            <svg class="diagram" viewBox="0 0 920 400" role="img" aria-label="A 2D map grid with restaurants as points; the three nearest to your location fall inside a dashed circle around you">
+              <!-- map panel + grid -->
+              <rect x="40" y="20" width="580" height="340" rx="12" class="d-box" />
+              <g class="d-grid">
+                <line x1="110" y1="24" x2="110" y2="356" /><line x1="180" y1="24" x2="180" y2="356" />
+                <line x1="250" y1="24" x2="250" y2="356" /><line x1="320" y1="24" x2="320" y2="356" />
+                <line x1="390" y1="24" x2="390" y2="356" /><line x1="460" y1="24" x2="460" y2="356" />
+                <line x1="530" y1="24" x2="530" y2="356" />
+                <line x1="44" y1="80" x2="616" y2="80" /><line x1="44" y1="140" x2="616" y2="140" />
+                <line x1="44" y1="200" x2="616" y2="200" /><line x1="44" y1="260" x2="616" y2="260" />
+                <line x1="44" y1="320" x2="616" y2="320" />
+              </g>
+              <text x="330" y="388" text-anchor="middle" class="d-small d-muted">longitude &rarr;</text>
+              <text x="20" y="190" transform="rotate(-90 20 190)" text-anchor="middle" class="d-small d-muted">latitude &rarr;</text>
+
+              <!-- far restaurants -->
+              <circle cx="120" cy="70" r="7" fill="#3a3f4a" /><circle cx="205" cy="300" r="7" fill="#3a3f4a" />
+              <circle cx="95" cy="210" r="7" fill="#3a3f4a" /><circle cx="540" cy="60" r="7" fill="#3a3f4a" />
+              <circle cx="560" cy="310" r="7" fill="#3a3f4a" /><circle cx="470" cy="330" r="7" fill="#3a3f4a" />
+              <circle cx="170" cy="150" r="7" fill="#3a3f4a" />
+
+              <!-- neighborhood -->
+              <circle cx="360" cy="185" r="100" fill="none" stroke="#e57368" stroke-width="2" stroke-dasharray="7 6" />
+
+              <!-- nearest three -->
+              <line x1="360" y1="185" x2="415" y2="120" class="d-wire" stroke-dasharray="3 4" />
+              <line x1="360" y1="185" x2="290" y2="230" class="d-wire" stroke-dasharray="3 4" />
+              <line x1="360" y1="185" x2="428" y2="235" class="d-wire" stroke-dasharray="3 4" />
+              <circle cx="415" cy="120" r="8" fill="#4fb8a8" />
+              <circle cx="290" cy="230" r="8" fill="#4fb8a8" />
+              <circle cx="428" cy="235" r="8" fill="#4fb8a8" />
+              <text x="432" y="112" class="d-small d-teal">0.3 mi</text>
+              <text x="222" y="252" class="d-small d-teal">0.4 mi</text>
+              <text x="444" y="258" class="d-small d-teal">0.5 mi</text>
+
+              <!-- you -->
+              <circle cx="360" cy="185" r="9" fill="#e57368" />
+              <circle cx="360" cy="185" r="16" fill="none" stroke="#e57368" stroke-width="2" />
+              <text x="360" y="162" text-anchor="middle" class="d-coral">you</text>
+
+              <!-- explainer -->
+              <text x="660" y="120" class="d-mono">place = (lat, lng)</text>
+              <text x="660" y="164">two numbers locate</text>
+              <text x="660" y="192">anything on Earth</text>
+              <text x="660" y="248" class="d-teal">"near me" = smallest</text>
+              <text x="660" y="276" class="d-teal">distance between points</text>
+            </svg>
             <aside class="notes">
-              Everyone has used vector search already — Google Maps. Two numbers place a point;
-              nearest-neighbor math finds the closest ones. Hold onto that picture.
-              (Diagram placeholder: simple 2D map scatter with "you are here" + nearest points.)
+              Everyone has used vector search already: Google Maps. Every restaurant is a point,
+              (lat, lng), just two numbers; "near me" is nearest-neighbor math on those points.
+              Hold onto this picture — the next slide is the same picture.
             </aside>
           </section>
 
           <section>
             <h2>Embeddings: lat/long for concepts</h2>
-            <ul>
-              <li>An embedding model maps text &rarr; a point in ~<span class="accent">1,000-dimensional</span> space</li>
-              <li>Similar meaning &rarr; <span class="teal">nearby points</span></li>
-              <li>"car" and "automobile" land close together; "banana" lands far away</li>
-            </ul>
-            <p class="muted" style="font-size: 0.7em; margin-top: 0.8em">
-              Same trick as the map — just more dimensions, and the axes are <em>meaning</em>, not
-              geography.
-            </p>
+            <svg class="diagram" viewBox="0 0 920 400" role="img" aria-label="The same scatter plot as the map, but the axes are meaning: car, automobile and truck cluster together, banana and apple cluster elsewhere, and the question 'how do I deploy?' lands nearest the deployment chunks">
+              <!-- same panel + grid as the map, on purpose -->
+              <rect x="40" y="20" width="580" height="340" rx="12" class="d-box" />
+              <g class="d-grid">
+                <line x1="110" y1="24" x2="110" y2="356" /><line x1="180" y1="24" x2="180" y2="356" />
+                <line x1="250" y1="24" x2="250" y2="356" /><line x1="320" y1="24" x2="320" y2="356" />
+                <line x1="390" y1="24" x2="390" y2="356" /><line x1="460" y1="24" x2="460" y2="356" />
+                <line x1="530" y1="24" x2="530" y2="356" />
+                <line x1="44" y1="80" x2="616" y2="80" /><line x1="44" y1="140" x2="616" y2="140" />
+                <line x1="44" y1="200" x2="616" y2="200" /><line x1="44" y1="260" x2="616" y2="260" />
+                <line x1="44" y1="320" x2="616" y2="320" />
+              </g>
+              <text x="330" y="388" text-anchor="middle" class="d-small d-muted">meaning dimension 1 &rarr;</text>
+              <text x="20" y="190" transform="rotate(-90 20 190)" text-anchor="middle" class="d-small d-muted">meaning dimension 2 &rarr;</text>
+              <text x="608" y="46" text-anchor="end" class="d-small d-muted">(2 of 1,024 dimensions)</text>
+
+              <!-- vehicles cluster -->
+              <circle cx="130" cy="90" r="8" fill="#8b7ec8" /><text x="148" y="84" class="d-small d-violet">car</text>
+              <circle cx="112" cy="132" r="8" fill="#8b7ec8" /><text x="130" y="152" class="d-small d-violet">automobile</text>
+              <circle cx="180" cy="116" r="8" fill="#8b7ec8" /><text x="198" y="122" class="d-small d-violet">truck</text>
+
+              <!-- fruit cluster -->
+              <circle cx="500" cy="82" r="8" fill="#3a3f4a" /><text x="518" y="76" class="d-small d-muted">banana</text>
+              <circle cx="536" cy="120" r="8" fill="#3a3f4a" /><text x="500" y="146" class="d-small d-muted">apple</text>
+
+              <!-- deploy neighborhood -->
+              <circle cx="350" cy="262" r="82" fill="none" stroke="#e57368" stroke-width="2" stroke-dasharray="7 6" />
+              <line x1="350" y1="262" x2="402" y2="228" class="d-wire" stroke-dasharray="3 4" />
+              <line x1="350" y1="262" x2="296" y2="300" class="d-wire" stroke-dasharray="3 4" />
+              <circle cx="402" cy="228" r="8" fill="#4fb8a8" />
+              <text x="594" y="206" text-anchor="end" class="d-small d-teal">"shipping to production"</text>
+              <circle cx="296" cy="300" r="8" fill="#4fb8a8" />
+              <text x="288" y="336" text-anchor="end" class="d-small d-teal">"release checklist"</text>
+
+              <!-- the query -->
+              <circle cx="350" cy="262" r="9" fill="#e57368" />
+              <circle cx="350" cy="262" r="16" fill="none" stroke="#e57368" stroke-width="2" />
+              <text x="256" y="230" text-anchor="end" class="d-coral">"how do I deploy?"</text>
+
+              <!-- explainer -->
+              <text x="660" y="120">same trick as the map,</text>
+              <text x="660" y="148">more dimensions</text>
+              <text x="660" y="204" class="d-violet">similar meaning</text>
+              <text x="660" y="232" class="d-violet">= nearby points</text>
+              <text x="660" y="288" class="d-small d-muted">no shared words needed:</text>
+              <text x="660" y="312" class="d-small d-muted">"deploy" finds "shipping"</text>
+            </svg>
             <aside class="notes">
-              Don't over-explain the dimensions — the point is "coordinates for meaning". Related
-              concepts cluster the way nearby restaurants cluster.
+              Deliberately the same picture as the map: an embedding model assigns every piece of
+              text coordinates, and the axes are meaning instead of geography. Related concepts
+              cluster the way nearby restaurants cluster, so "how do I deploy?" lands next to
+              "shipping to production" even though they share no words. Don't over-explain the
+              1,024 dimensions; "coordinates for meaning" is the point.
             </aside>
           </section>
 
@@ -258,37 +514,130 @@ $ claude
 
           <section>
             <h2>Ingest: three staged steps</h2>
-            <ol>
-              <li><strong>Upload</strong> — video/audio goes straight to the bucket</li>
-              <li>
-                <strong>Transcribe</strong> — WhisperX writes a transcript with
-                <span class="teal">per-word timestamps</span>
-              </li>
-              <li>
-                <strong>Publish = index</strong> — chunk &rarr; embed &rarr; store; the
-                <em>only</em> way content enters the search space
-              </li>
-            </ol>
+            <svg class="diagram" viewBox="0 0 920 400" role="img" aria-label="Recall ingest: a video uploads to the bucket, WhisperX transcribes it with word timestamps, then publish chunks the transcript, embeds each chunk via Replicate, and stores vectors in pgvector">
+              <defs>
+                <marker id="d7a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" fill="#4a4a4a" />
+                </marker>
+              </defs>
+
+              <!-- 1 upload -->
+              <circle cx="46" cy="46" r="16" fill="#1e2127" stroke="#4a4a4a" stroke-width="1.5" />
+              <text x="46" y="53" text-anchor="middle" class="d-small d-muted">1</text>
+              <text x="74" y="53" class="d-title">upload</text>
+              <rect x="30" y="76" width="200" height="70" rx="10" class="d-box" />
+              <path d="M58 128 L58 96 L82 96 L90 104 L90 128 Z" fill="none" stroke="#9a9691" stroke-width="2" stroke-linejoin="round" />
+              <path d="M69 108 L80 114 L69 120 Z" fill="#9a9691" />
+              <text x="155" y="119" text-anchor="middle">video</text>
+              <text x="130" y="172" text-anchor="middle" class="d-small d-muted">straight to the bucket</text>
+
+              <path d="M230 111 L292 111" class="d-wire" marker-end="url(#d7a)" />
+
+              <!-- 2 transcribe -->
+              <circle cx="312" cy="46" r="16" fill="#1e2127" stroke="#4a4a4a" stroke-width="1.5" />
+              <text x="312" y="53" text-anchor="middle" class="d-small d-muted">2</text>
+              <text x="340" y="53" class="d-title">transcribe</text>
+              <rect x="296" y="76" width="240" height="70" rx="10" class="d-box-teal" />
+              <text x="416" y="106" text-anchor="middle" class="d-teal">WhisperX</text>
+              <text x="416" y="132" text-anchor="middle" class="d-small d-muted">word-level timestamps</text>
+
+              <path d="M536 111 L598 111" class="d-wire" marker-end="url(#d7a)" />
+
+              <!-- transcript artifact -->
+              <rect x="602" y="70" width="288" height="82" rx="10" class="d-box" />
+              <text x="622" y="100" class="d-mono d-muted">{ text: "so vectors are…",</text>
+              <text x="622" y="128" class="d-mono d-muted">&#160;&#160;start: 41.2, end: 41.9 }</text>
+
+              <!-- 3 publish group -->
+              <circle cx="46" cy="212" r="16" fill="#1e2127" stroke="#4a4a4a" stroke-width="1.5" />
+              <text x="46" y="219" text-anchor="middle" class="d-small d-muted">3</text>
+              <text x="74" y="219" class="d-title">publish = index</text>
+              <rect x="30" y="238" width="860" height="120" rx="12" fill="none" stroke="#c95c54" stroke-width="2" />
+
+              <path d="M740 152 C 740 190 500 180 420 250" class="d-wire" marker-end="url(#d7a)" />
+
+              <rect x="60" y="266" width="180" height="64" rx="10" class="d-box" />
+              <text x="150" y="292" text-anchor="middle">chunker</text>
+              <text x="150" y="318" text-anchor="middle" class="d-small d-muted">45s windows</text>
+
+              <path d="M240 298 L300 298" class="d-wire" marker-end="url(#d7a)" />
+
+              <rect x="304" y="266" width="250" height="64" rx="10" class="d-box-violet" />
+              <text x="429" y="292" text-anchor="middle" class="d-violet">Replicate · embed</text>
+              <text x="429" y="318" text-anchor="middle" class="d-small d-muted">bge-large-en-v1.5</text>
+
+              <path d="M554 298 L614 298" class="d-wire" marker-end="url(#d7a)" />
+              <text x="584" y="258" text-anchor="middle" class="d-small d-violet">1,024-dim</text>
+
+              <!-- pgvector cylinder -->
+              <path d="M634 280 a52 12 0 0 0 104 0 a52 12 0 0 0 -104 0 v40 a52 12 0 0 0 104 0 v-40" fill="#1e2127" stroke="#4a4a4a" stroke-width="2" />
+              <text x="686" y="352" text-anchor="middle" class="d-small">Postgres · <tspan class="d-teal">pgvector</tspan></text>
+
+              <text x="770" y="296" class="d-small d-coral">the only door</text>
+              <text x="770" y="320" class="d-small d-coral">into search</text>
+            </svg>
+            <p class="muted" style="font-size: 0.62em; margin-top: 0.5em">
+              A draft video has <span class="accent">zero vectors</span>, so search structurally
+              cannot surface it. No "hide from search" flag to forget.
+            </p>
             <aside class="notes">
-              The publish gate is a design decision worth dwelling on: a draft video has *zero*
-              embeddings, so search structurally cannot surface it. No "hide from search" flag to
-              forget.
+              Step 1: presigned upload straight to the bucket. Step 2: WhisperX runs in the
+              pipeline's background steps and writes a transcript with per-word timestamps. Step 3
+              is the design decision worth dwelling on: publish IS indexing — chunk, embed via
+              Replicate, store in pgvector. Unpublish deletes the vectors. Content that isn't
+              published has no coordinates, so the search space simply doesn't contain it.
             </aside>
           </section>
 
           <section>
             <h2>Chunking the transcript</h2>
-            <ul style="font-size: 0.9em">
-              <li>Windows target <span class="accent">45 seconds</span>, capped at 120 words</li>
-              <li>Overlapping windows so no thought gets cut at a boundary</li>
-              <li>
-                Each chunk keeps <code>{start, end}</code> metadata: that's what powers second-exact
-                deep links
-              </li>
-            </ul>
+            <svg class="diagram" viewBox="0 0 920 330" role="img" aria-label="A transcript timeline cut into 45-second chunks that overlap by 10 seconds; each chunk carries start and end metadata">
+              <!-- timeline strip -->
+              <rect x="40" y="40" width="840" height="40" rx="8" class="d-box" />
+              <text x="60" y="66" class="d-small d-muted">transcript · every word timestamped</text>
+              <g class="d-grid">
+                <line x1="40" y1="92" x2="40" y2="104" /><line x1="250" y1="92" x2="250" y2="104" />
+                <line x1="460" y1="92" x2="460" y2="104" /><line x1="670" y1="92" x2="670" y2="104" />
+                <line x1="880" y1="92" x2="880" y2="104" />
+              </g>
+              <text x="40" y="126" text-anchor="middle" class="d-small d-muted">0:00</text>
+              <text x="250" y="126" text-anchor="middle" class="d-small d-muted">0:45</text>
+              <text x="460" y="126" text-anchor="middle" class="d-small d-muted">1:30</text>
+              <text x="670" y="126" text-anchor="middle" class="d-small d-muted">2:15</text>
+              <text x="880" y="126" text-anchor="middle" class="d-small d-muted">3:00</text>
+
+              <!-- chunks: 45s ≈ 210px, 10s overlap ≈ 47px -->
+              <rect x="40" y="144" width="210" height="44" rx="8" class="d-box-coral" />
+              <text x="145" y="172" text-anchor="middle" class="d-small">chunk 1 · 0:00–0:45</text>
+
+              <rect x="203" y="196" width="210" height="44" rx="8" class="d-box-teal" />
+              <text x="308" y="224" text-anchor="middle" class="d-small">chunk 2 · 0:35–1:20</text>
+
+              <rect x="366" y="144" width="210" height="44" rx="8" class="d-box-coral" />
+              <text x="471" y="172" text-anchor="middle" class="d-small">chunk 3 · 1:10–1:55</text>
+
+              <rect x="529" y="196" width="210" height="44" rx="8" class="d-box-teal" />
+              <text x="634" y="224" text-anchor="middle" class="d-small">chunk 4 · 1:45–2:30</text>
+
+              <!-- overlap callout -->
+              <rect x="203" y="144" width="47" height="96" fill="rgba(232, 230, 227, 0.08)" />
+              <path d="M203 258 L250 258" class="d-wire-coral" />
+              <text x="226" y="284" text-anchor="middle" class="d-small d-coral">10s overlap</text>
+              <text x="226" y="308" text-anchor="middle" class="d-small d-muted">no thought cut mid-sentence</text>
+
+              <!-- metadata callout -->
+              <text x="760" y="284" text-anchor="middle" class="d-mono d-muted">metadata: { start, end }</text>
+              <text x="760" y="310" text-anchor="middle" class="d-small d-muted">&rarr; second-exact deep links</text>
+            </svg>
+            <p class="muted" style="font-size: 0.62em; margin-top: 0.5em">
+              45-second windows, capped at 120 words. The chunk text is pure transcript; timing
+              rides in metadata.
+            </p>
             <aside class="notes">
               The chunk *text* is pure transcript words; timing rides in metadata that comes back
-              with every search hit. This separation is why answers can cite an exact second.
+              with every search hit. That separation is why answers can cite an exact second. The
+              word cap (120) closes a window early on dense speech, with a matching word-overlap
+              cap so overlap never explodes.
             </aside>
           </section>
 
@@ -315,18 +664,58 @@ $ claude
 
           <section>
             <h2>Asking a question</h2>
-            <ol style="font-size: 0.9em">
-              <li>Your question is embedded with the <em>same</em> model</li>
-              <li><code>vector_search</code> finds the nearest chunks in pgvector</li>
-              <li>
-                Search shows them directly; <span class="teal">chat</span> hands them to Claude as a
-                tool result — classic RAG
-              </li>
-            </ol>
-            <p class="muted" style="font-size: 0.7em; margin-top: 0.8em">
-              One embedding space for search <em>and</em> chat — change the model, re-index
-              everything.
+            <svg class="diagram" viewBox="0 0 920 380" role="img" aria-label="A question is embedded with the same model, vector_search finds the nearest chunks in pgvector, and the chunks feed both the search results page and the chat answer with a second-exact deep link">
+              <defs>
+                <marker id="d9a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" fill="#4a4a4a" />
+                </marker>
+              </defs>
+
+              <!-- question -->
+              <rect x="12" y="60" width="252" height="64" rx="10" class="d-box-coral" />
+              <text x="138" y="99" text-anchor="middle" class="d-small">"when do we use pgvector?"</text>
+
+              <path d="M264 92 L310 92" class="d-wire" marker-end="url(#d9a)" />
+
+              <!-- embed -->
+              <rect x="314" y="60" width="200" height="64" rx="10" class="d-box-violet" />
+              <text x="414" y="86" text-anchor="middle" class="d-violet">embed</text>
+              <text x="414" y="112" text-anchor="middle" class="d-small d-muted">the same model</text>
+
+              <path d="M514 92 L574 92" class="d-wire" marker-end="url(#d9a)" />
+
+              <!-- vector_search + pgvector -->
+              <rect x="578" y="60" width="220" height="64" rx="10" class="d-box-teal" />
+              <text x="688" y="99" text-anchor="middle" class="d-mono d-teal">vector_search</text>
+              <path d="M688 124 L688 160" class="d-wire" marker-end="url(#d9a)" />
+              <path d="M638 176 a50 11 0 0 0 100 0 a50 11 0 0 0 -100 0 v34 a50 11 0 0 0 100 0 v-34" fill="#1e2127" stroke="#4a4a4a" stroke-width="2" />
+              <text x="754" y="186" class="d-small">pgvector</text>
+              <text x="754" y="212" class="d-small d-muted">nearest chunks</text>
+
+              <!-- chunks out, to both consumers -->
+              <path d="M638 196 C 460 210 300 228 232 260" class="d-wire" marker-end="url(#d9a)" />
+              <path d="M676 226 C 672 240 666 250 660 260" class="d-wire" marker-end="url(#d9a)" />
+              <text x="430" y="208" text-anchor="middle" class="d-small d-muted">top chunks + {start, end}</text>
+
+              <!-- two consumers -->
+              <rect x="60" y="266" width="330" height="88" rx="10" class="d-box" />
+              <text x="225" y="298" text-anchor="middle">search page</text>
+              <text x="225" y="326" text-anchor="middle" class="d-small d-muted">shows the chunks directly</text>
+
+              <rect x="430" y="266" width="460" height="88" rx="10" class="d-box" />
+              <text x="655" y="298" text-anchor="middle"><tspan class="d-violet">chat</tspan> · Claude reads the chunks, answers</text>
+              <text x="655" y="326" text-anchor="middle" class="d-small d-coral">"…covered at youtu.be/…?t=272" · second-exact</text>
+            </svg>
+            <p class="muted" style="font-size: 0.62em; margin-top: 0.5em">
+              One embedding space for search <em>and</em> chat. Change the embedding model and
+              every video must be re-indexed.
             </p>
+            <aside class="notes">
+              The question takes the same path the chunks took: embedded with the same pinned
+              model, so question and chunks live in one space. vector_search returns the nearest
+              chunks with their timing metadata; the search page shows them raw, and chat is
+              classic RAG — Claude gets the chunks as a tool result and cites the exact second.
+            </aside>
           </section>
 
           <section class="center-slide">

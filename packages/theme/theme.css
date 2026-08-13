@@ -129,6 +129,106 @@
   color: var(--bff-muted);
 }
 
+/* ---------------------------------------------------------------- */
+/* Diagrams — inline SVG conventions                                 */
+/* Role convention: coral = emphasized thing / query, teal = search  */
+/* machinery, violet = models & vectors, wire gray = structure.      */
+/* ---------------------------------------------------------------- */
+
+.reveal svg.diagram {
+  width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+  font-family: var(--r-main-font);
+}
+
+.reveal .diagram text {
+  fill: var(--bff-text);
+  font-size: 20px;
+}
+
+.reveal .diagram .d-title {
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.reveal .diagram .d-small {
+  font-size: 17px;
+}
+
+.reveal .diagram .d-muted {
+  fill: var(--bff-muted);
+}
+
+.reveal .diagram .d-coral {
+  fill: var(--bff-coral-bright);
+}
+
+.reveal .diagram .d-teal {
+  fill: var(--bff-teal);
+}
+
+.reveal .diagram .d-violet {
+  fill: var(--bff-violet);
+}
+
+.reveal .diagram .d-mono {
+  font-family: var(--r-code-font);
+  font-size: 17px;
+}
+
+.reveal .diagram .d-box {
+  fill: var(--bff-panel);
+  stroke: #2c3038;
+  stroke-width: 1.5;
+}
+
+.reveal .diagram .d-box-coral {
+  fill: rgba(201, 92, 84, 0.16);
+  stroke: var(--bff-coral);
+  stroke-width: 1.5;
+}
+
+.reveal .diagram .d-box-teal {
+  fill: rgba(79, 184, 168, 0.14);
+  stroke: var(--bff-teal);
+  stroke-width: 1.5;
+}
+
+.reveal .diagram .d-box-violet {
+  fill: rgba(139, 126, 200, 0.16);
+  stroke: var(--bff-violet);
+  stroke-width: 1.5;
+}
+
+.reveal .diagram .d-wire {
+  stroke: var(--bff-wire);
+  stroke-width: 2;
+  fill: none;
+}
+
+.reveal .diagram .d-wire-coral {
+  stroke: var(--bff-coral-bright);
+  stroke-width: 2.5;
+  fill: none;
+}
+
+.reveal .diagram .d-wire-teal {
+  stroke: var(--bff-teal);
+  stroke-width: 2.5;
+  fill: none;
+}
+
+.reveal .diagram .d-dashed {
+  stroke-dasharray: 7 6;
+}
+
+.reveal .diagram .d-grid {
+  stroke: #262a31;
+  stroke-width: 1;
+}
+
 /* Progress bar + controls in brand color */
 .reveal .progress {
   color: var(--bff-coral);
