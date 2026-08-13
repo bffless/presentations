@@ -1,0 +1,10 @@
+{
+  "name": "@presentations/theme",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Shared Reveal.js theme for BFFless presentations",
+  "exports": {
+    "./theme.css": "./theme.css",
+    "./logo.svg": "./logo.svg"
+  }
+}

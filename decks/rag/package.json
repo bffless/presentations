@@ -1,0 +1,19 @@
+{
+  "name": "rag",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Context, RAG & Vector Search — how AI assistants find what they don't know",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@presentations/theme": "workspace:*",
+    "reveal.js": "^6.0.1"
+  },
+  "devDependencies": {
+    "vite": "^8.2.1"
+  }
+}

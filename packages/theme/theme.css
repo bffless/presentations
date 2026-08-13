@@ -1,0 +1,139 @@
+/**
+ * BFFless presentation theme — layered on top of reveal.js's black theme.
+ * Import order in a deck: reveal.css → theme/black.css → this file.
+ *
+ * Brand: coral #c95c54 (the heart), wire gray #4a4a4a, near-black ground.
+ */
+
+:root {
+  --bff-coral: #c95c54;
+  --bff-coral-bright: #e57368;
+  --bff-teal: #4fb8a8;
+  --bff-violet: #8b7ec8;
+  --bff-wire: #4a4a4a;
+  --bff-ink: #14161a;
+  --bff-panel: #1e2127;
+  --bff-text: #e8e6e3;
+  --bff-muted: #9a9691;
+
+  /* reveal.js theme variables */
+  --r-background-color: var(--bff-ink);
+  --r-main-color: var(--bff-text);
+  --r-heading-color: #ffffff;
+  --r-link-color: var(--bff-coral-bright);
+  --r-link-color-hover: #f0938a;
+  --r-selection-background-color: var(--bff-coral);
+  --r-main-font: 'Avenir Next', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --r-heading-font: 'Avenir Next', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --r-heading-text-transform: none;
+  --r-heading-font-weight: 700;
+  --r-heading1-size: 2.4em;
+  --r-heading2-size: 1.7em;
+  --r-heading3-size: 1.2em;
+  --r-main-font-size: 38px;
+  --r-code-font: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+}
+
+.reveal .slides {
+  text-align: left;
+}
+
+.reveal .slides section.center-slide {
+  text-align: center;
+}
+
+.reveal h1,
+.reveal h2 {
+  letter-spacing: -0.02em;
+}
+
+.reveal h2 {
+  margin-bottom: 0.7em;
+}
+
+/* Accent kicker above a heading, e.g. part numbers */
+.reveal .kicker {
+  display: block;
+  font-size: 0.5em;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--bff-coral-bright);
+  margin-bottom: 0.6em;
+}
+
+.reveal .muted {
+  color: var(--bff-muted);
+}
+
+.reveal .accent {
+  color: var(--bff-coral-bright);
+}
+
+.reveal .teal {
+  color: var(--bff-teal);
+}
+
+.reveal .violet {
+  color: var(--bff-violet);
+}
+
+/* Panel / card */
+.reveal .panel {
+  background: var(--bff-panel);
+  border: 1px solid #2c3038;
+  border-radius: 12px;
+  padding: 0.6em 0.9em;
+}
+
+/* Big statement slide */
+.reveal .statement {
+  font-size: 1.5em;
+  font-weight: 700;
+  line-height: 1.25;
+  color: #ffffff;
+}
+
+/* Two-column layout */
+.reveal .cols {
+  display: flex;
+  gap: 1em;
+  align-items: stretch;
+}
+
+.reveal .cols > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.reveal ul {
+  line-height: 1.5;
+}
+
+.reveal li + li {
+  margin-top: 0.35em;
+}
+
+.reveal code {
+  background: var(--bff-panel);
+  border-radius: 6px;
+  padding: 0.05em 0.3em;
+  font-size: 0.9em;
+}
+
+.reveal .footer-note {
+  position: absolute;
+  bottom: -2.2em;
+  left: 0;
+  font-size: 0.5em;
+  color: var(--bff-muted);
+}
+
+/* Progress bar + controls in brand color */
+.reveal .progress {
+  color: var(--bff-coral);
+}
+
+.reveal .controls {
+  color: var(--bff-coral);
+}

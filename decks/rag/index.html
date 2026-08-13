@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Context, RAG &amp; Vector Search — BFFless</title>
+    <meta
+      name="description"
+      content="How AI assistants find what they don't know: context, RAG, vector search, and how BFFless Recall implements it."
+    />
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <!-- ============================================================ -->
+        <!-- Title -->
+        <!-- ============================================================ -->
+        <section class="center-slide">
+          <img src="./logo.svg" alt="BFFless" style="width: 140px; margin-bottom: 0.5em" />
+          <h1 style="font-size: 1.9em">Context, RAG &amp; Vector Search</h1>
+          <p class="muted">How AI assistants find what they don't know</p>
+          <p class="muted" style="font-size: 0.55em; margin-top: 3em">
+            BFFless &middot; rag.bffless.dev
+          </p>
+          <aside class="notes">
+            Arc of the talk: what an assistant actually "knows" (its context), how RAG lets it look
+            things up (the library), how that lookup works under the hood (vectors ≈ lat/long), and
+            a real implementation: BFFless Recall.
+          </aside>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- Part 1 — The assistant and its context -->
+        <!-- ============================================================ -->
+        <section>
+          <section class="center-slide">
+            <span class="kicker">Part 1</span>
+            <h2>What is Claude / ChatGPT,<br />and what does it actually know?</h2>
+          </section>
+
+          <section>
+            <h2>A model is a frozen snapshot</h2>
+            <ul>
+              <li>Trained <em>once</em>, on a huge snapshot of text. Then frozen.</li>
+              <li>At runtime it does one thing: <span class="accent">predict the next word</span> from what's in front of it</li>
+              <li>It has no memory of you, your company, or anything after training day</li>
+            </ul>
+            <aside class="notes">
+              Demystify: it's not a database and not "looking things up" by default. Everything it
+              appears to know was baked in at training time.
+            </aside>
+          </section>
+
+          <section>
+            <h2>The context window</h2>
+            <p class="statement" style="font-size: 1.1em">
+              Context = everything the model can <span class="accent">see right now</span>
+            </p>
+            <ul>
+              <li>Your messages, instructions, files, tool results: all of it</li>
+              <li>It's a <span class="teal">finite budget</span> (hundreds of pages, not a hard drive)</li>
+              <li>If it's not in the context, the model doesn't know it. Full stop.</li>
+            </ul>
+            <aside class="notes">
+              This is the single most important concept of the talk. Everything else — RAG, vectors,
+              Recall — exists to answer "how do we get the right stuff into this window?"
+            </aside>
+          </section>
+
+          <section>
+            <h2>A coding agent starts <em>somewhere</em></h2>
+            <div class="cols">
+              <div class="panel">
+                <pre><code class="language-text" data-trim>
+$ cd my-project
+$ claude
+                </code></pre>
+                <p style="font-size: 0.65em" class="muted">
+                  You launch it in a folder, and that folder is its world
+                </p>
+              </div>
+              <div>
+                <p style="font-size: 0.8em">Context builds in layers:</p>
+                <ul style="font-size: 0.75em">
+                  <li><code>CLAUDE.md</code> / <code>AGENTS.md</code> — standing instructions</li>
+                  <li><span class="teal">Skills</span> — task know-how loaded on demand</li>
+                  <li>Files it reads as it works</li>
+                  <li>The conversation itself</li>
+                </ul>
+              </div>
+            </div>
+            <aside class="notes">
+              The agent bootstraps context from the filesystem: project instructions first, then
+              skills when a task matches, then whatever it reads while working. Context accretes —
+              it starts nearly empty and fills as the session goes.
+            </aside>
+          </section>
+
+          <section>
+            <h2>The problem</h2>
+            <ul>
+              <li>Your knowledge is <span class="accent">huge</span>: docs, wikis, tickets, code history, videos…</li>
+              <li>The context window is <span class="accent">small</span> and every token costs time and money</li>
+              <li>And your knowledge <em>changes</em>; the model's training data doesn't</li>
+            </ul>
+            <p class="statement" style="font-size: 0.95em; margin-top: 1em">
+              You can't stuff everything in.<br />
+              What if the model could <span class="teal">go look things up?</span>
+            </p>
+          </section>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- Part 2 — RAG: the library -->
+        <!-- ============================================================ -->
+        <section>
+          <section class="center-slide">
+            <span class="kicker">Part 2</span>
+            <h2>RAG — give the model a library card</h2>
+          </section>
+
+          <section>
+            <h2>Retrieval-Augmented Generation</h2>
+            <ul>
+              <li>Don't teach the model everything up front</li>
+              <li>
+                At question time: <span class="teal">retrieve</span> the few most relevant passages,
+                put <em>them</em> into context
+              </li>
+              <li>The model answers grounded in what it just read</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2>The library analogy</h2>
+            <p class="statement" style="font-size: 1.0em">
+              I don't know everything in the library.<br />
+              I know how to <span class="accent">search</span> it.
+            </p>
+            <ul style="font-size: 0.85em">
+              <li>Walk in with a question</li>
+              <li>Search the catalog &rarr; pull <em>one</em> book off the shelf</li>
+              <li>Read the relevant chapter &rarr; expert on that one topic, right now</li>
+              <li>Never need to know what the other million books say</li>
+            </ul>
+            <aside class="notes">
+              Key point: expertise-on-demand beats memorizing the collection. The librarian doesn't
+              memorize books either — they're expert at *finding*. RAG makes the model a great
+              library patron.
+            </aside>
+          </section>
+
+          <section>
+            <h2>The RAG loop</h2>
+            <div class="panel" style="font-size: 0.8em; text-align: center; padding: 1em">
+              <p>
+                <span class="accent">question</span> &rarr; <span class="teal">retrieve</span> top
+                matches &rarr; add them to the <span class="violet">context</span> &rarr; model
+                <span class="accent">answers</span> (with citations)
+              </p>
+            </div>
+            <ul style="font-size: 0.8em; margin-top: 0.8em">
+              <li>Knowledge lives <em>outside</em> the model — update it any time</li>
+              <li>Answers can cite their sources</li>
+              <li>Context stays small: only what this question needs</li>
+            </ul>
+            <aside class="notes">
+              (Diagram placeholder — we'll replace this text-arrow panel with a proper SVG flow
+              diagram during the content pass.)
+            </aside>
+          </section>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- Part 3 — Under the hood: vector search -->
+        <!-- ============================================================ -->
+        <section>
+          <section class="center-slide">
+            <span class="kicker">Part 3</span>
+            <h2>Under the hood — searching by <em>meaning</em></h2>
+          </section>
+
+          <section>
+            <h2>Keyword search isn't enough</h2>
+            <ul>
+              <li>Keywords find <em>words</em>, not meaning</li>
+              <li>"car" misses "automobile"; "how do I deploy" misses "shipping to production"</li>
+              <li>The library catalog needs to understand what a book is <em>about</em></li>
+            </ul>
+          </section>
+
+          <section>
+            <h2>"Restaurants near me"</h2>
+            <ul>
+              <li>Every restaurant is a point: <code>(lat, lng)</code>, just two numbers</li>
+              <li>"Near me" = smallest <span class="teal">distance</span> between points</li>
+              <li>A 2-dimensional <span class="accent">vector</span> locates anything on Earth</li>
+            </ul>
+            <aside class="notes">
+              Everyone has used vector search already — Google Maps. Two numbers place a point;
+              nearest-neighbor math finds the closest ones. Hold onto that picture.
+              (Diagram placeholder: simple 2D map scatter with "you are here" + nearest points.)
+            </aside>
+          </section>
+
+          <section>
+            <h2>Embeddings: lat/long for concepts</h2>
+            <ul>
+              <li>An embedding model maps text &rarr; a point in ~<span class="accent">1,000-dimensional</span> space</li>
+              <li>Similar meaning &rarr; <span class="teal">nearby points</span></li>
+              <li>"car" and "automobile" land close together; "banana" lands far away</li>
+            </ul>
+            <p class="muted" style="font-size: 0.7em; margin-top: 0.8em">
+              Same trick as the map — just more dimensions, and the axes are <em>meaning</em>, not
+              geography.
+            </p>
+            <aside class="notes">
+              Don't over-explain the dimensions — the point is "coordinates for meaning". Related
+              concepts cluster the way nearby restaurants cluster.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Vector search = the catalog is a map</h2>
+            <ol style="font-size: 0.9em">
+              <li>Ahead of time: embed every chunk of every document, store the vectors</li>
+              <li>At question time: embed the <em>question</em> with the same model</li>
+              <li>Find the <span class="teal">nearest stored vectors</span> — those chunks are your answer material</li>
+            </ol>
+            <p class="muted" style="font-size: 0.7em; margin-top: 0.8em">
+              "Nearest" = cosine similarity, the same math family as distance-on-the-map.
+            </p>
+          </section>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- Part 4 — BFFless Recall -->
+        <!-- ============================================================ -->
+        <section>
+          <section class="center-slide">
+            <span class="kicker">Part 4</span>
+            <h2>How BFFless does it: <span class="accent">Recall</span></h2>
+            <p class="muted" style="font-size: 0.6em">
+              Video transcript RAG — upload &rarr; transcribe &rarr; publish &rarr; ask
+            </p>
+          </section>
+
+          <section>
+            <h2>Recall in one slide</h2>
+            <ul>
+              <li>Admin uploads videos; transcripts get chunked and embedded</li>
+              <li>A public site <span class="teal">searches and chats</span> over them</li>
+              <li>Answers deep-link to the <span class="accent">exact second</span> of the video</li>
+              <li>No app server — everything is BFFless pipelines</li>
+            </ul>
+          </section>
+
+          <section>
+            <h2>Ingest: three staged steps</h2>
+            <ol>
+              <li><strong>Upload</strong> — video/audio goes straight to the bucket</li>
+              <li>
+                <strong>Transcribe</strong> — WhisperX writes a transcript with
+                <span class="teal">per-word timestamps</span>
+              </li>
+              <li>
+                <strong>Publish = index</strong> — chunk &rarr; embed &rarr; store; the
+                <em>only</em> way content enters the search space
+              </li>
+            </ol>
+            <aside class="notes">
+              The publish gate is a design decision worth dwelling on: a draft video has *zero*
+              embeddings, so search structurally cannot surface it. No "hide from search" flag to
+              forget.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Chunking the transcript</h2>
+            <ul style="font-size: 0.9em">
+              <li>Windows target <span class="accent">45 seconds</span>, capped at 120 words</li>
+              <li>Overlapping windows so no thought gets cut at a boundary</li>
+              <li>
+                Each chunk keeps <code>{start, end}</code> metadata: that's what powers second-exact
+                deep links
+              </li>
+            </ul>
+            <aside class="notes">
+              The chunk *text* is pure transcript words; timing rides in metadata that comes back
+              with every search hit. This separation is why answers can cite an exact second.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Building the vectors</h2>
+            <ul style="font-size: 0.9em">
+              <li>
+                Each chunk goes to <span class="violet">Replicate</span>, running the
+                <code>bge-large-en-v1.5</code> embedding model
+              </li>
+              <li>Back comes a <span class="accent">1,024-dimensional vector</span> per chunk</li>
+              <li>
+                Stored in CE's Postgres with <span class="teal">pgvector</span>: the database
+                <em>is</em> the vector DB
+              </li>
+            </ul>
+            <aside class="notes">
+              Replicate hosts the embedding model so CE doesn't need a GPU. pgvector means no
+              separate vector database to run — vectors live next to the rest of the data.
+              (We'll dive into the actual table/handler details in the collaborative pass —
+              embed_store handler, vector column, etc.)
+            </aside>
+          </section>
+
+          <section>
+            <h2>Asking a question</h2>
+            <ol style="font-size: 0.9em">
+              <li>Your question is embedded with the <em>same</em> model</li>
+              <li><code>vector_search</code> finds the nearest chunks in pgvector</li>
+              <li>
+                Search shows them directly; <span class="teal">chat</span> hands them to Claude as a
+                tool result — classic RAG
+              </li>
+            </ol>
+            <p class="muted" style="font-size: 0.7em; margin-top: 0.8em">
+              One embedding space for search <em>and</em> chat — change the model, re-index
+              everything.
+            </p>
+          </section>
+
+          <section class="center-slide">
+            <h2>Recap</h2>
+            <ul style="display: inline-block; text-align: left; font-size: 0.85em">
+              <li>A model only knows what's in its <span class="accent">context</span></li>
+              <li><span class="teal">RAG</span>: search the library, don't memorize it</li>
+              <li>Vector search: <span class="violet">lat/long for meaning</span></li>
+              <li>Recall: transcripts &rarr; pgvector &rarr; second-exact answers</li>
+            </ul>
+            <p class="muted" style="font-size: 0.55em; margin-top: 2em">
+              recall.bffless.dev &middot; bffless.dev
+            </p>
+          </section>
+        </section>
+      </div>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
