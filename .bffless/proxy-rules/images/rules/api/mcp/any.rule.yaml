@@ -1,0 +1,52 @@
+methods:
+  - GET
+  - POST
+  - DELETE
+targetUrl: pipeline
+order: 30
+timeout: 120000
+pipeline:
+  name: images MCP endpoint
+  description: "POST /api/mcp — one tool, generate_image, on CE's generic mcp_handler. The tool runs as its sibling rule under /api/mcp-tools/, in-process as the caller, where its scope and role are enforced. GET/DELETE → 405 (stateless, no SSE). This validator has no allowApiKey: the credential is a bearer app token (OAuth via admin.<host>) or a session, and a credential-less call gets the 401 that starts OAuth discovery."
+  steps:
+    - id: mcp
+      name: mcp
+      handler: mcp_handler
+      config:
+        serverInfo:
+          name: bffless-presentations-images
+          version: 0.1.0
+        instructions: "One tool, generate_image: renders an image with google/nano-banana-2 on Replicate and returns a temporary URL (valid about an hour). Each call costs money — confirm the prompt with the person before calling, then save the image locally straight away."
+        tools:
+          - name: generate_image
+            description: "Generate one image with google/nano-banana-2 on Replicate. Costs money per call — ask the person before calling. Returns a Replicate delivery URL valid for roughly an hour; download it (curl -sL -o …) into the deck's assets to keep it. Nothing is stored server-side."
+            inputSchema:
+              type: object
+              properties:
+                prompt:
+                  type: string
+                  description: "The full image prompt: subject, setting, style, composition, palette, any short text to render. Up to 2000 characters."
+                aspect_ratio:
+                  type: string
+                  enum: ["16:9", "9:16", "1:1", "4:3", "3:4", "3:2", "2:3", "21:9"]
+                  description: "Default 16:9 (full-bleed slides); 1:1 for panels."
+                reference_images:
+                  type: array
+                  items:
+                    type: string
+                  maxItems: 3
+                  description: "Optional https:// URLs of reference images (style or subject) the model should follow."
+              required:
+                - prompt
+              additionalProperties: false
+            annotations:
+              readOnlyHint: false
+              destructiveHint: false
+              idempotentHint: false
+              openWorldHint: true
+            rule:
+              path: /api/mcp-tools/generate
+              method: POST
+  validators:
+    - type: auth_required
+description: "The images MCP endpoint (stateless Streamable HTTP over mcp_handler). The tool's gate — scope images:generate, role admin — is on its sibling rule."

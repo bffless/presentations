@@ -1,0 +1,44 @@
+targetUrl: pipeline
+order: 40
+timeout: 120000
+pipeline:
+  name: MCP tool generate_image
+  description: "generate_image as one rule: mcp_handler invokes it in-process as the caller with the tool's arguments as the body. prep validates (a refusal skips generate, so it costs nothing) → generate runs google/nano-banana-2 on Replicate → reply answers a CallToolResult carrying the delivery URL. Nothing is stored. The validator is where the tool's scope and role are enforced."
+  steps:
+    - id: prep
+      name: prep
+      handler: function_handler
+      code: ./prep.fn.js
+    - id: generate
+      name: generate
+      handler: replicate
+      config:
+        condition: steps.prep.ok
+        model: google/nano-banana-2
+        input:
+          prompt: steps.prep.prompt
+          aspect_ratio: steps.prep.aspectRatio
+          # [] when none; absolute https URLs pass straight through to the model.
+          image_input: steps.prep.images
+        timeout: 110000
+    - id: reply
+      name: reply
+      handler: function_handler
+      code: ./reply.fn.js
+    - id: respond
+      name: respond
+      handler: response_handler
+      config:
+        body: "{{{steps.reply.json}}}"
+        status: 200
+        headers:
+          Cache-Control: no-store
+        contentType: application/json
+  validators:
+    - type: auth_required
+      config:
+        roles:
+          - admin
+        requiredScopes:
+          - images:generate
+description: "generate_image over the MCP endpoint — scope images:generate, CE global role admin. Needs the project's Replicate token (AI Services, admin panel)."
