@@ -35,6 +35,14 @@ and brand assets. Decks depend on it as `@presentations/theme`.
    deploy creates the `<name>` alias, add a subdomain `<name>.bffless.dev` pointing at that alias
    with path `/decks/<name>/dist`. DNS is a wildcard; no DNS change needed.
 
+## Generating images
+
+The repo ships an MCP server, `images`, that Claude Code connects to via `.mcp.json` (OAuth on
+admin.bffless.dev). Its one tool, `generate_image`, renders an image with Replicate's
+`google/nano-banana-2` and returns a temporary URL; the `generate-image` skill asks before each
+paid call and saves the result into the deck's `public/images/`. Source:
+`.bffless/proxy-rules/images/`; design notes: `docs/plans/2026-09-06-images-mcp-layout.md`.
+
 ## Deployment
 
 - Push to `main` touching `decks/<name>/**` (or the shared theme) → deploys to the `<name>` alias.

@@ -1,0 +1,30 @@
+name: Sync proxy rules
+
+# The `images` rule set (the generate_image MCP server) is the project's default
+# set on admin.bffless.dev, so it answers on every deck host. Rules land on merge
+# to main only — previews never need them.
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.bffless/**'
+      - '.github/workflows/deploy-rules.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-rules
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync the images rule set
+        uses: bffless/deploy-proxy-rules@v1
+        with:
+          path: .bffless/proxy-rules/images
+          api-url: ${{ vars.BFFLESS_URL }}
+          api-key: ${{ secrets.BFFLESS_API_KEY }}
+          project: bffless/presentations

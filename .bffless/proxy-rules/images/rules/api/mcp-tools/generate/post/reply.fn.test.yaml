@@ -1,0 +1,22 @@
+handler: ./reply.fn.js
+cases:
+  - name: array output → text line with the url and structuredContent
+    data: { steps: { prep: { ok: true, prompt: "a hero", aspectRatio: "16:9", images: [] }, generate: { output: ["https://replicate.delivery/x/out.png"] } } }
+    expect:
+      result:
+        json: '{"content":[{"type":"text","text":"Image ready (16:9, google/nano-banana-2). The URL is valid for about an hour: https://replicate.delivery/x/out.png\nSave it now, e.g. curl -sL -o decks/<deck>/public/images/<slug>.png \"https://replicate.delivery/x/out.png\""}],"structuredContent":{"url":"https://replicate.delivery/x/out.png","model":"google/nano-banana-2","aspect_ratio":"16:9","prompt":"a hero"}}'
+  - name: string output is accepted too
+    data: { steps: { prep: { ok: true, prompt: "p", aspectRatio: "1:1", images: [] }, generate: { output: "https://r/o.png" } } }
+    expect:
+      result:
+        json: '{"content":[{"type":"text","text":"Image ready (1:1, google/nano-banana-2). The URL is valid for about an hour: https://r/o.png\nSave it now, e.g. curl -sL -o decks/<deck>/public/images/<slug>.png \"https://r/o.png\""}],"structuredContent":{"url":"https://r/o.png","model":"google/nano-banana-2","aspect_ratio":"1:1","prompt":"p"}}'
+  - name: prep refusal → isError, nothing generated
+    data: { steps: { prep: { ok: false, error: "prompt is required", prompt: "", aspectRatio: "16:9", images: [] } } }
+    expect:
+      result:
+        json: '{"isError":true,"content":[{"type":"text","text":"generate_image refused: prompt is required"}]}'
+  - name: empty Replicate output → isError
+    data: { steps: { prep: { ok: true, prompt: "p", aspectRatio: "16:9", images: [] }, generate: { output: [] } } }
+    expect:
+      result:
+        json: '{"isError":true,"content":[{"type":"text","text":"generate_image failed: Replicate returned no image"}]}'

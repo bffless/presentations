@@ -6,8 +6,8 @@ Guidance for Claude Code in the BFFless presentations monorepo.
 
 Reveal.js slide decks, one per `decks/<name>/`, each deployed as a static site to
 `https://<name>.bffless.dev` on the **admin.bffless.dev** BFFless instance (project
-`bffless/presentations`). No app backend, no proxy rules — pure static deploys via
-`bffless/upload-artifact`.
+`bffless/presentations`). No app backend — pure static deploys via `bffless/upload-artifact`.
+The only server-side piece is the `images` proxy rule set (below), the project's default set.
 
 ## Commands
 
@@ -38,6 +38,23 @@ Root shortcuts exist per deck (`pnpm rag:dev`, `pnpm rag:build`).
   `<name>.bffless.dev` → project `bffless/presentations`, alias `<name>`, path
   `/decks/<name>/dist`. `*.bffless.dev` DNS is a wildcard — creating the BFFless domain is all
   that's needed.
+
+## Generating images (`images` MCP server)
+
+`.bffless/proxy-rules/images/` is a rules-as-code set: one `mcp_handler` endpoint at
+`POST /api/mcp` exposing `generate_image` (Replicate `google/nano-banana-2`), its sibling tool
+rule, and the OAuth discovery document. It is the project's **default** rule set, so it
+answers on every deck host; `.mcp.json` points Claude Code at `rag.bffless.dev/api/mcp` and
+`/mcp` → Authenticate runs the OAuth consent on admin.bffless.dev (scope `images:generate`,
+admins only). The `generate-image` skill (`.claude/skills/`) is the workflow: **ask before
+every paid call**, then `curl` the returned URL into `decks/<deck>/public/images/` within the
+hour — nothing is stored server-side.
+
+- `npx bffless rules test .bffless/proxy-rules/images` runs the handler fixtures;
+  `rules validate` / `rules build` check the set; `rules push --dry-run` diffs against live
+  (needs `BFFLESS_API_KEY` for admin.bffless.dev).
+- Rules sync on push to `main` touching `.bffless/**` (`deploy-rules.yml`). One-time setup
+  and the full design: `docs/plans/2026-09-06-images-mcp-layout.md`.
 
 ## Validating slides headlessly
 

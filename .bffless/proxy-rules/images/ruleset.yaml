@@ -1,0 +1,2 @@
+name: images
+description: generate_image over MCP — a thin wrapper on Replicate google/nano-banana-2. The project's default set, so the endpoint answers on every deck host.
