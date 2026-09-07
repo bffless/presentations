@@ -30,8 +30,6 @@ presentations/
           reply.fn.test.yaml                  +
         _custom/well-known/
           get.rule.yaml                       +  RFC 9728 protected-resource document
-          wellKnown.fn.js                     +
-          wellKnown.fn.test.yaml              +
   .claude/skills/generate-image/SKILL.md      +  the "ask first, then save locally" skill
   .github/workflows/deploy-rules.yml          +  bffless/deploy-proxy-rules on push to main
   CLAUDE.md                                   ~  drop "no proxy rules"; add the rule-set + skill notes
@@ -157,7 +155,17 @@ Notes on the steps:
 
 ### `rules/_custom/well-known/get.rule.yaml` — OAuth discovery
 
-Copy of the workflow app's rule; the function derives every URL from the request host.
+One step on CE's `oauth_protected_resource` handler (RFC 9728). Nothing about this
+instance is baked in: the handler builds `resource` from the request host, names CE's
+real OAuth issuer, and derives `scopes_supported` from the `requiredScopes` on the
+tools' sibling rules. It answers regardless of deployment visibility — the caller by
+definition has no credential yet.
+
+CE's gate is an OR (`bypassVisibility || servesProtectedResourceDocument`), so the
+handler alone is enough and `bypassVisibility` is strictly redundant here. We keep it
+anyway: if this deck ever goes private, a 302-to-login on discovery would break the
+OAuth flow before it starts, and one line is cheap insurance on a rule nothing else
+guards.
 
 ```yaml
 pathPattern: /.well-known/oauth-protected-resource*
@@ -167,21 +175,16 @@ bypassVisibility: true
 pipeline:
   name: OAuth protected-resource metadata
   steps:
-    - id: doc
-      name: doc
-      handler: function_handler
-      code: ./wellKnown.fn.js
-    - id: respond
-      name: respond
-      handler: response_handler
+    - id: prm
+      name: prm
+      handler: oauth_protected_resource
       config:
-        body: "{{{steps.doc.json}}}"
-        status: 200
-        headers: { Cache-Control: "public, max-age=300" }
-        contentType: application/json
+        resource: /api/mcp
+        resourceName: Presentations images
+        resourceDocumentation: https://github.com/bffless/presentations/blob/main/docs/plans/2026-09-06-images-mcp-layout.md
 ```
 
-`wellKnown.fn.js` answers, for host `rag.bffless.dev`:
+For host `rag.bffless.dev` it answers:
 
 ```json
 {
@@ -189,11 +192,14 @@ pipeline:
   "authorization_servers": ["https://admin.bffless.dev"],
   "scopes_supported": ["images:generate"],
   "bearer_methods_supported": ["header"],
-  "resource_name": "Presentations images"
+  "resource_name": "Presentations images",
+  "resource_documentation": "https://github.com/bffless/presentations/blob/main/docs/plans/2026-09-06-images-mcp-layout.md"
 }
 ```
 
-(`admin.` + the host minus its first label, as in `apps/workflow/src/mcp/wellKnown.ts`.)
+The path-suffixed form a client tries first
+(`…/oauth-protected-resource/api/mcp`) answers the same document; a suffix naming any
+other path is a `404`.
 
 ### `.mcp.json`
 

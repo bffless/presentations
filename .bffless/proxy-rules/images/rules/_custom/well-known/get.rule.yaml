@@ -1,22 +1,22 @@
 pathPattern: /.well-known/oauth-protected-resource*
 targetUrl: pipeline
 order: 32
+# Redundant with the handler (being this rule's first enabled step at the
+# well-known path already makes CE serve it despite deployment visibility),
+# but kept: CE's gate is an OR (bypassVisibility || servesProtectedResource
+# Document), and discovery is read before any credential exists — so if this
+# deck ever goes private, a 302-to-login here would break OAuth before it
+# starts. Cheap insurance on a rule nothing else guards.
 bypassVisibility: true
 pipeline:
   name: OAuth protected-resource metadata
-  description: "RFC 9728: the document an MCP client reads before it has any credential, so it is served regardless of deployment visibility (bypassVisibility). Names this host's /api/mcp as the resource, CE's OAuth server on admin.<domain> as the authorization server, and images:generate as the scope; every URL is derived from the request. Matches the path-suffixed form a client tries first (…/oauth-protected-resource/api/mcp) too."
+  description: "RFC 9728: the document an MCP client reads before it has any credential. CE's oauth_protected_resource handler serves it, so nothing about this instance is baked in — resource is this host plus /api/mcp, authorization_servers is CE's real OAuth issuer, and scopes_supported is derived from the requiredScopes on the tools' sibling rules (images:generate). The handler answers regardless of deployment visibility — bypassVisibility above is kept as the belt to that braces — and it matches the path-suffixed form a client tries first (…/oauth-protected-resource/api/mcp) too."
   steps:
-    - id: doc
-      name: doc
-      handler: function_handler
-      code: ./wellKnown.fn.js
-    - id: respond
-      name: respond
-      handler: response_handler
+    - id: prm
+      name: prm
+      handler: oauth_protected_resource
       config:
-        body: "{{{steps.doc.json}}}"
-        status: 200
-        headers:
-          Cache-Control: "public, max-age=300"
-        contentType: application/json
+        resource: /api/mcp
+        resourceName: Presentations images
+        resourceDocumentation: https://github.com/bffless/presentations/blob/main/docs/plans/2026-09-06-images-mcp-layout.md
 description: "OAuth discovery for the images MCP endpoint (RFC 9728), pre-credential by definition — served despite visibility."
