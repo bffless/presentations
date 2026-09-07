@@ -94,6 +94,24 @@
   color: #ffffff;
 }
 
+/* Scrim: darkens a full-bleed background image behind centred text, so a
+   photographic or illustrated hero can carry a slide without losing contrast.
+   Pair with data-background-image on the same section. */
+.reveal .slides section.scrim::before {
+  content: '';
+  position: absolute;
+  inset: -20vh -20vw;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(20, 22, 26, 0.94) 0%,
+    rgba(20, 22, 26, 0.86) 40%,
+    rgba(20, 22, 26, 0.35) 68%,
+    rgba(20, 22, 26, 0) 82%
+  );
+}
+
 /* Two-column layout */
 .reveal .cols {
   display: flex;

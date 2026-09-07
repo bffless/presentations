@@ -16,15 +16,22 @@
         <!-- ============================================================ -->
         <!-- Title -->
         <!-- ============================================================ -->
-        <section class="center-slide">
-          <!-- Hero image goes here once generated: the picture this deck's own
-               server drew. data-background-image="images/<slug>.png" on this
-               section, logo kept on top. -->
+        <section
+          class="center-slide scrim"
+          data-background-image="images/hero-pass.jpg"
+          data-background-size="cover"
+        >
+          <!-- The background was drawn by the server this deck is about:
+               generate_image on mcp.bffless.dev. Say so out loud. -->
           <img src="./logo.svg" alt="BFFless" style="width: 140px; margin-bottom: 0.5em" />
           <h1 style="font-size: 1.7em">Your backend is<br />already an MCP server</h1>
           <p class="muted">Three proxy rules, no server process</p>
           <p class="muted" style="font-size: 0.55em; margin-top: 2.5em">
             BFFless &middot; mcp.bffless.dev
+          </p>
+          <p class="muted" style="font-size: 0.4em; margin-top: 0.6em">
+            background: <code>generate_image</code> &middot; <code>images:generate</code> &middot;
+            nano-banana-2
           </p>
           <aside class="notes">
             Say it out loud if the hero image is in: this picture was made by the very server
@@ -468,7 +475,9 @@ pipeline:
               One step. serverInfo and instructions are what the client shows the model about the
               server as a whole. The validator with no config means: anyone signed in may read the
               menu, and an anonymous caller gets the 401 that kicks off OAuth discovery. That 401
-              is a feature, not an error.
+              is a feature, not an error. Order matters if you demo this with curl: the validator
+              runs before the handler, so an unauthenticated GET answers 401, not 405 — the 405
+              is what an authenticated GET gets.
             </aside>
           </section>
 
@@ -962,7 +971,9 @@ npx bffless rules push --dry-run                      # diff against live
               The unauthenticated curl of the well-known document is the first check every single
               time — it separates "my server is fine, the client can't find it" from everything
               else. Nine times in ten it's the visibility bypass or a set that was never attached
-              to the alias.
+              to the alias. On the 405: that's the authenticated answer. With no credential the
+              validator gets there first and you see 401 — which is also fine, and is what starts
+              OAuth.
             </aside>
           </section>
         </section>
@@ -1032,7 +1043,11 @@ npx bffless rules push --dry-run                      # diff against live
             </aside>
           </section>
 
-          <section class="center-slide">
+          <section
+            class="center-slide"
+            data-background-image="images/recap-plate.jpg"
+            data-background-size="cover"
+          >
             <h2>Go build one</h2>
             <ul style="display: inline-block; text-align: left; font-size: 0.8em">
               <li>An endpoint, a tool, a discovery document</li>

@@ -2,7 +2,7 @@
   "mcpServers": {
     "images": {
       "type": "http",
-      "url": "https://rag.bffless.dev/api/mcp"
+      "url": "https://mcp.bffless.dev/api/mcp"
     }
   }
 }
