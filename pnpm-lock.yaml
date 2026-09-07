@@ -8,6 +8,19 @@ importers:
 
   .: {}
 
+  decks/mcp:
+    dependencies:
+      '@presentations/theme':
+        specifier: workspace:*
+        version: link:../../packages/theme
+      reveal.js:
+        specifier: ^6.0.1
+        version: 6.0.1
+    devDependencies:
+      vite:
+        specifier: ^8.2.1
+        version: 8.2.1
+
   decks/rag:
     dependencies:
       '@presentations/theme':

@@ -9,6 +9,7 @@ via [`bffless/upload-artifact`](https://github.com/bffless/upload-artifact).
 | Deck | URL | Topic |
 | ---- | --- | ----- |
 | `decks/rag` | [rag.bffless.dev](https://rag.bffless.dev) | Context, RAG & vector search — and how BFFless Recall implements it |
+| `decks/mcp` | [mcp.bffless.dev](https://mcp.bffless.dev) | Your backend is already an MCP server — three proxy rules, no server process |
 
 ## Local development
 
@@ -16,6 +17,8 @@ via [`bffless/upload-artifact`](https://github.com/bffless/upload-artifact).
 pnpm install
 pnpm rag:dev       # Vite dev server → http://localhost:5180
 pnpm rag:build     # builds to decks/rag/dist
+pnpm mcp:dev       # Vite dev server → http://localhost:5181
+pnpm mcp:build     # builds to decks/mcp/dist
 ```
 
 Press `S` in the browser for speaker notes, `Esc` for the slide overview, `F` for fullscreen.

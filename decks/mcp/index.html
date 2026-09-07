@@ -1,0 +1,1057 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Your backend is already an MCP server — BFFless</title>
+    <meta
+      name="description"
+      content="Building MCP servers out of BFFless proxy rules: the mcp_handler step, tools as sibling rules, scope-gated auth, and the built-in OAuth server."
+    />
+  </head>
+  <body>
+    <div class="reveal">
+      <div class="slides">
+        <!-- ============================================================ -->
+        <!-- Title -->
+        <!-- ============================================================ -->
+        <section class="center-slide">
+          <!-- Hero image goes here once generated: the picture this deck's own
+               server drew. data-background-image="images/<slug>.png" on this
+               section, logo kept on top. -->
+          <img src="./logo.svg" alt="BFFless" style="width: 140px; margin-bottom: 0.5em" />
+          <h1 style="font-size: 1.7em">Your backend is<br />already an MCP server</h1>
+          <p class="muted">Three proxy rules, no server process</p>
+          <p class="muted" style="font-size: 0.55em; margin-top: 2.5em">
+            BFFless &middot; mcp.bffless.dev
+          </p>
+          <aside class="notes">
+            Say it out loud if the hero image is in: this picture was made by the very server
+            we're about to build. Arc: what MCP is, why hosting one is the hard part (auth), how
+            three rules in a rule set become the server, then the real images server that draws
+            these slides.
+          </aside>
+        </section>
+
+        <section>
+          <h2>What you'll leave with</h2>
+          <ul>
+            <li>What MCP actually is &mdash; <span class="violet">protocol level</span>, no metaphors about USB</li>
+            <li>Why <span class="teal">hosting</span> one is the hard part, and why that part is auth</li>
+            <li>How <span class="accent">three rules</span> make it not hard</li>
+          </ul>
+          <p class="muted" style="font-size: 0.65em; margin-top: 1.2em">
+            There's a live demo at the end, and a repo to clone.
+          </p>
+          <aside class="notes">
+            Set expectations: this is a deep dive, we finish with a real consent screen and a
+            real paid image generation. Everything shown is in bffless/presentations.
+          </aside>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- Part 1 — What MCP actually is -->
+        <!-- ============================================================ -->
+        <section>
+          <section class="center-slide">
+            <span class="kicker">Part 1</span>
+            <h2>What MCP actually is</h2>
+          </section>
+
+          <section>
+            <h2>A model can read, not <em>do</em></h2>
+            <p class="statement" style="font-size: 1.05em">
+              RAG gave the model a <span class="teal">library card</span>.<br />
+              MCP gives it <span class="accent">hands</span>.
+            </p>
+            <p class="muted" style="font-size: 0.68em; margin-top: 1.2em">
+              "Find me a restaurant" is retrieval. "Book the table" is an action &mdash; and no
+              amount of context will make a paragraph book anything.
+            </p>
+            <aside class="notes">
+              Callback to the RAG talk: everything the model knows is in its context window, and
+              retrieval is how the right things get in there. Actions are a different problem: the
+              model needs something outside itself that it can invoke and get a result back from.
+              That's MCP: a protocol for offering a model a list of things it may do.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Host, client, server</h2>
+            <svg class="diagram" viewBox="0 0 920 320" role="img" aria-label="A host app such as claude.ai or Claude Code embeds an MCP client, which speaks JSON-RPC over HTTP to your MCP server, which fronts your existing backend">
+              <defs>
+                <marker id="m1a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" fill="#4a4a4a" />
+                </marker>
+              </defs>
+
+              <!-- host wrapping the client -->
+              <rect x="10" y="60" width="380" height="200" rx="14" class="d-box-violet" />
+              <text x="34" y="94" class="d-title d-violet">host application</text>
+              <text x="34" y="122" class="d-small d-muted">claude.ai &middot; Claude Code &middot; your app</text>
+              <text x="34" y="150" class="d-small d-muted">owns the model, the UI, the consent</text>
+
+              <rect x="34" y="172" width="332" height="66" rx="10" class="d-box" />
+              <text x="200" y="200" text-anchor="middle" class="d-title">MCP client</text>
+              <text x="200" y="226" text-anchor="middle" class="d-small d-muted">one per server, speaks the protocol</text>
+
+              <!-- wire -->
+              <path d="M394 160 L526 160" class="d-wire" marker-start="url(#m1a)" marker-end="url(#m1a)" />
+              <text x="460" y="40" text-anchor="middle" class="d-small">JSON-RPC over HTTP</text>
+              <text x="460" y="200" text-anchor="middle" class="d-small d-muted">tools/list</text>
+              <text x="460" y="224" text-anchor="middle" class="d-small d-muted">tools/call</text>
+
+              <!-- your server -->
+              <rect x="530" y="60" width="380" height="200" rx="14" class="d-box-coral" />
+              <text x="554" y="94" class="d-title d-coral">your MCP server</text>
+              <text x="554" y="122" class="d-small d-muted">the only part you write</text>
+
+              <rect x="554" y="150" width="332" height="42" rx="8" class="d-box" />
+              <text x="720" y="178" text-anchor="middle" class="d-small">a list of tools</text>
+              <rect x="554" y="200" width="332" height="42" rx="8" class="d-box" />
+              <text x="720" y="228" text-anchor="middle" class="d-small">your existing backend behind them</text>
+
+              <text x="460" y="298" text-anchor="middle" class="d-small d-muted">the host never talks to your backend directly &mdash; only through the tool list you publish</text>
+            </svg>
+            <aside class="notes">
+              Three words people mix up. The host is the app the person is using; it embeds a
+              client per server it connects to; the server is yours. The important consequence:
+              the host decides what the model sees, so your job is to publish an honest,
+              well-described list of tools and enforce your own rules behind them.
+            </aside>
+          </section>
+
+          <section>
+            <h2>The restaurant</h2>
+            <svg class="diagram" viewBox="0 0 920 340" role="img" aria-label="The menu is tools/list, the order is tools/call, the kitchen is your existing backend; the menu is printed from the kitchen">
+              <defs>
+                <marker id="m2a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" fill="#4a4a4a" />
+                </marker>
+                <marker id="m2c" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" fill="#e57368" />
+                </marker>
+              </defs>
+
+              <rect x="20" y="60" width="250" height="150" rx="12" class="d-box-violet" />
+              <text x="145" y="100" text-anchor="middle" class="d-title">the menu</text>
+              <text x="145" y="134" text-anchor="middle" class="d-mono d-violet">tools/list</text>
+              <text x="145" y="170" text-anchor="middle" class="d-small d-muted">names, descriptions,</text>
+              <text x="145" y="192" text-anchor="middle" class="d-small d-muted">what each one takes</text>
+
+              <rect x="335" y="60" width="250" height="150" rx="12" class="d-box-coral" />
+              <text x="460" y="100" text-anchor="middle" class="d-title">the order</text>
+              <text x="460" y="134" text-anchor="middle" class="d-mono d-coral">tools/call</text>
+              <text x="460" y="170" text-anchor="middle" class="d-small d-muted">one dish, with</text>
+              <text x="460" y="192" text-anchor="middle" class="d-small d-muted">its arguments</text>
+
+              <rect x="650" y="60" width="250" height="150" rx="12" class="d-box-teal" />
+              <text x="775" y="100" text-anchor="middle" class="d-title">the kitchen</text>
+              <text x="775" y="134" text-anchor="middle" class="d-small d-teal">your backend</text>
+              <text x="775" y="170" text-anchor="middle" class="d-small d-muted">already exists,</text>
+              <text x="775" y="192" text-anchor="middle" class="d-small d-muted">already has the rules</text>
+
+              <path d="M270 135 L331 135" class="d-wire" marker-end="url(#m2a)" />
+              <path d="M585 135 L646 135" class="d-wire" marker-end="url(#m2a)" />
+
+              <!-- printed from the kitchen -->
+              <path d="M775 210 L775 262 L145 262 L145 214" class="d-wire-coral d-dashed" marker-end="url(#m2c)" />
+              <text x="460" y="292" text-anchor="middle" class="d-coral">the menu is printed from the kitchen</text>
+              <text x="460" y="322" text-anchor="middle" class="d-small d-muted">so it can never promise a dish the kitchen can't cook</text>
+            </svg>
+            <aside class="notes">
+              Plant the seed for Part 3. In most MCP servers the menu is written separately from
+              the kitchen: a tool function, a schema, and a backend endpoint, kept in sync by
+              hand. Drift is the normal failure. In BFFless the tool points at a rule that
+              already exists, so the menu is literally derived from the kitchen.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Just JSON-RPC over HTTP</h2>
+            <pre style="font-size: 0.45em"><code class="language-json" data-trim>
+{ "jsonrpc": "2.0", "id": 1, "method": "tools/list" }
+            </code></pre>
+            <pre style="font-size: 0.42em"><code class="language-json" data-trim>
+{ "tools": [ {
+  "name": "generate_image",
+  "description": "Generate one image with google/nano-banana-2 on Replicate.
+                  Costs money per call — ask the person before calling.",
+  "inputSchema": {
+    "type": "object",
+    "properties": {
+      "prompt":        { "type": "string" },
+      "aspect_ratio":  { "type": "string", "enum": ["16:9", "1:1", "..."] }
+    },
+    "required": ["prompt"]
+  } } ] }
+            </code></pre>
+            <p class="muted" style="font-size: 0.6em">
+              Streamable HTTP, stateless: <span class="teal">one message per POST</span>.
+            </p>
+            <aside class="notes">
+              This is the real answer from the images server. Two things to point at: the
+              description is prompt engineering — it is what the model reads when deciding
+              whether to call you — and inputSchema is plain JSON Schema. No sessions, no SSE
+              stream to keep alive; every POST is self-contained.
+            </aside>
+          </section>
+
+          <section>
+            <h2>A tool call, end to end</h2>
+            <pre style="font-size: 0.42em"><code class="language-json" data-trim>
+{ "jsonrpc": "2.0", "id": 2, "method": "tools/call",
+  "params": { "name": "generate_image",
+              "arguments": { "prompt": "a broken heart wired with circuit traces",
+                             "aspect_ratio": "16:9" } } }
+            </code></pre>
+            <pre style="font-size: 0.42em"><code class="language-json" data-trim>
+{ "content": [ { "type": "text",
+                 "text": "Image ready (16:9, google/nano-banana-2). The URL is valid
+                          for about an hour: https://replicate.delivery/…/out.png" } ],
+  "structuredContent": { "url": "https://replicate.delivery/…/out.png",
+                         "model": "google/nano-banana-2",
+                         "aspect_ratio": "16:9" } }
+            </code></pre>
+            <p class="muted" style="font-size: 0.6em">
+              The <span class="accent">text line</span> is what the model reads.
+              <span class="teal">structuredContent</span> is data for the host.
+            </p>
+            <aside class="notes">
+              The text line is your last chance to steer the model: ours tells it the URL expires
+              and to save the file now. structuredContent is the machine-readable twin — the host
+              can render it, store it, hand it to code. Both come from the same tool result.
+            </aside>
+          </section>
+
+          <section class="center-slide">
+            <h2>Where it breaks</h2>
+            <p class="statement" style="font-size: 0.95em">
+              Writing the tool: <span class="teal">an afternoon</span>.<br />
+              Hosting it so a stranger's client can log in:<br />
+              <span class="accent">the rest of the month</span>.
+            </p>
+            <aside class="notes">
+              Everyone's first MCP server runs locally over stdio and works in fifteen minutes.
+              The moment you want it on the internet, connected from claude.ai by someone who is
+              not you, the problem changes shape completely. That's Part 2.
+            </aside>
+          </section>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- Part 2 — The boss level is auth -->
+        <!-- ============================================================ -->
+        <section>
+          <section class="center-slide">
+            <span class="kicker">Part 2</span>
+            <h2>The boss level is <span class="accent">auth</span></h2>
+          </section>
+
+          <section>
+            <h2>The usual build</h2>
+            <ul style="font-size: 0.9em">
+              <li>An SDK and a process &mdash; genuinely easy, genuinely fine for local stdio</li>
+              <li>Somewhere to <span class="teal">run</span> it. TLS. A domain. Uptime.</li>
+              <li>And then: <em>who is calling, and are they allowed?</em></li>
+            </ul>
+            <p class="muted" style="font-size: 0.65em; margin-top: 1em">
+              The hello-world is thirty lines. The login story is the rest of the spec.
+            </p>
+            <aside class="notes">
+              Don't dunk on the SDKs — they're good, and stdio servers on your own machine are a
+              perfectly happy ending. The cliff is remote + multi-user. That's where the interesting
+              engineering is, and it is all auth.
+            </aside>
+          </section>
+
+          <section>
+            <h2>What claude.ai expects</h2>
+            <svg class="diagram" viewBox="0 0 920 400" role="img" aria-label="Connect sequence: client posts and gets a 401 with a resource_metadata hint, reads the protected-resource document, reads authorization server metadata, registers dynamically, runs an authorize request with PKCE, the person consents, the client exchanges a token and calls the tool">
+              <defs>
+                <marker id="m4a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" fill="#4fb8a8" />
+                </marker>
+              </defs>
+
+              <text x="130" y="34" text-anchor="middle" class="d-title">client</text>
+              <text x="672" y="34" text-anchor="middle" class="d-title">you &amp; your authorization server</text>
+              <line x1="130" y1="48" x2="130" y2="384" class="d-wire d-dashed" />
+              <line x1="676" y1="48" x2="676" y2="384" class="d-wire d-dashed" />
+
+              <path d="M130 88 L672 88" class="d-wire-teal" marker-end="url(#m4a)" />
+              <text x="140" y="58" class="d-small">POST /api/mcp &rarr; <tspan class="d-teal">401</tspan></text>
+              <text x="140" y="80" class="d-small d-muted">with <tspan class="d-mono">WWW-Authenticate: resource_metadata=…</tspan></text>
+
+              <path d="M130 128 L672 128" class="d-wire-teal" marker-end="url(#m4a)" />
+              <text x="140" y="120" class="d-small">GET <tspan class="d-mono">/.well-known/oauth-protected-resource</tspan> &nbsp;<tspan class="d-muted">RFC 9728</tspan></text>
+
+              <path d="M130 178 L672 178" class="d-wire-teal" marker-end="url(#m4a)" />
+              <text x="140" y="170" class="d-small">GET <tspan class="d-mono">/.well-known/oauth-authorization-server</tspan> &nbsp;<tspan class="d-muted">RFC 8414</tspan></text>
+
+              <path d="M130 228 L672 228" class="d-wire-teal" marker-end="url(#m4a)" />
+              <text x="140" y="220" class="d-small">register a client, on the spot &nbsp;<tspan class="d-muted">RFC 7591</tspan></text>
+
+              <rect x="150" y="248" width="524" height="52" rx="10" class="d-box-coral" />
+              <text x="412" y="272" text-anchor="middle" class="d-small">authorize + PKCE &rarr; <tspan class="d-coral">a person sees a consent page</tspan></text>
+              <text x="412" y="292" text-anchor="middle" class="d-small d-muted">and ticks the scopes they'll grant</text>
+
+              <path d="M130 330 L672 330" class="d-wire-teal" marker-end="url(#m4a)" />
+              <text x="140" y="322" class="d-small">exchange the code for a token</text>
+
+              <path d="M130 378 L672 378" class="d-wire-teal" marker-end="url(#m4a)" />
+              <text x="140" y="370" class="d-small"><tspan class="d-mono">tools/call</tspan> with <tspan class="d-mono">Authorization: Bearer …</tspan></text>
+            </svg>
+            <p class="muted" style="font-size: 0.55em; margin-top: 0.3em">
+              There is no "paste an API key" field in claude.ai. Your server must be an OAuth
+              <em>protected resource</em>.
+            </p>
+            <aside class="notes">
+              Name the four RFCs once and move on — nobody memorises them, they just need to know
+              this is a real spec stack and not something to improvise. The one step that isn't
+              machinery is the consent page: a human, looking at a list of scopes, deciding.
+              Everything else is discovery so the client can find that page on its own.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Three ways in</h2>
+            <table style="font-size: 0.6em; width: 100%">
+              <thead>
+                <tr>
+                  <th>Credential</th>
+                  <th>Who is it</th>
+                  <th>Scopes enforced?</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>session cookie</td>
+                  <td>you, signed in to the instance</td>
+                  <td class="muted">no</td>
+                </tr>
+                <tr>
+                  <td><code>X-API-Key</code></td>
+                  <td>you, from a script or CI</td>
+                  <td class="muted">no</td>
+                </tr>
+                <tr>
+                  <td class="accent">OAuth app token</td>
+                  <td class="accent">an app acting <em>for</em> you</td>
+                  <td class="accent">yes</td>
+                </tr>
+              </tbody>
+            </table>
+            <p class="muted" style="font-size: 0.62em; margin-top: 1em">
+              A person acting as themselves isn't a delegation. Only delegations get scope-checked.
+            </p>
+            <aside class="notes">
+              This table pre-empts an hour of confusion. Roles always apply — the tool is
+              admin-only whichever credential arrives. Scopes only exist to bound what you handed
+              to a third party, so a cookie or your own API key sails past them. That's also the
+              one-line path for your own use: an API key in a header, no OAuth at all.
+            </aside>
+          </section>
+
+          <section class="center-slide">
+            <h2>And the good news</h2>
+            <p class="statement" style="font-size: 1em">
+              Every BFFless instance <span class="teal">already runs</span><br />
+              that authorization server<br />
+              on its <span class="accent">admin host</span>.
+            </p>
+            <aside class="notes">
+              The consent page, dynamic client registration, PKCE, token issue and revoke — CE
+              ships all of it. Which means the part of the deep dive that would normally be a
+              month of work is a field in a JSON document. That's Part 3.
+            </aside>
+          </section>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- Part 3 — The rule set is the server -->
+        <!-- ============================================================ -->
+        <section>
+          <section class="center-slide">
+            <span class="kicker">Part 3</span>
+            <h2>The rule set <em>is</em> the server</h2>
+            <p class="muted" style="font-size: 0.6em">
+              An endpoint, a tool, a discovery document
+            </p>
+          </section>
+
+          <section>
+            <h2>Three rules</h2>
+            <svg class="diagram" viewBox="0 0 920 380" role="img" aria-label="A client posts to the mcp_handler rule at /api/mcp, which runs sibling tool rules in-process; a discovery rule points the client at the OAuth server on the admin host">
+              <defs>
+                <marker id="m3a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" fill="#4a4a4a" />
+                </marker>
+                <marker id="m3t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" fill="#4fb8a8" />
+                </marker>
+              </defs>
+
+              <!-- client -->
+              <rect x="14" y="96" width="196" height="86" rx="12" class="d-box-violet" />
+              <text x="112" y="130" text-anchor="middle" class="d-title">claude.ai</text>
+              <text x="112" y="156" text-anchor="middle" class="d-small d-muted">or Claude Code</text>
+
+              <!-- endpoint -->
+              <rect x="300" y="82" width="250" height="114" rx="12" class="d-box-coral" />
+              <text x="425" y="114" text-anchor="middle" class="d-title">POST /api/mcp</text>
+              <text x="425" y="144" text-anchor="middle" class="d-mono d-coral">mcp_handler</text>
+              <text x="425" y="172" text-anchor="middle" class="d-small d-muted">stateless &middot; auth_required</text>
+
+              <!-- tool siblings -->
+              <rect x="620" y="24" width="292" height="84" rx="12" class="d-box" />
+              <text x="766" y="54" text-anchor="middle" class="d-mono">/api/mcp-tools/generate</text>
+              <text x="766" y="80" text-anchor="middle" class="d-small d-muted">roles: admin</text>
+              <text x="766" y="100" text-anchor="middle" class="d-small d-muted">scope images:generate</text>
+
+              <rect x="620" y="124" width="292" height="72" rx="12" class="d-box" />
+              <text x="766" y="154" text-anchor="middle" class="d-mono">/api/mcp-tools/…</text>
+              <text x="766" y="180" text-anchor="middle" class="d-small d-muted">any pipeline, its own gate</text>
+
+              <!-- discovery -->
+              <rect x="290" y="262" width="270" height="90" rx="12" class="d-box-teal" />
+              <text x="425" y="292" text-anchor="middle" class="d-small">/.well-known/</text>
+              <text x="425" y="316" text-anchor="middle" class="d-small">oauth-protected-resource</text>
+              <text x="425" y="342" text-anchor="middle" class="d-small d-muted">who may issue tokens</text>
+
+              <rect x="620" y="262" width="292" height="90" rx="12" class="d-box-teal" />
+              <text x="766" y="298" text-anchor="middle" class="d-title">admin.&lt;host&gt;</text>
+              <text x="766" y="324" text-anchor="middle" class="d-small d-muted">CE's OAuth server</text>
+              <text x="766" y="344" text-anchor="middle" class="d-small d-muted">the consent page</text>
+
+              <path d="M210 139 L296 139" class="d-wire" marker-end="url(#m3a)" />
+              <text x="253" y="122" text-anchor="middle" class="d-small d-muted">tools/call</text>
+              <path d="M550 116 L616 78" class="d-wire" marker-end="url(#m3a)" />
+              <path d="M550 160 L616 158" class="d-wire" marker-end="url(#m3a)" />
+              <text x="583" y="224" text-anchor="middle" class="d-small d-muted">in-process, as the caller</text>
+
+              <path d="M112 182 L112 307 L286 307" class="d-wire-teal d-dashed" marker-end="url(#m3t)" />
+              <text x="196" y="288" text-anchor="middle" class="d-small d-teal">401 &rarr; discovery</text>
+              <path d="M560 307 L616 307" class="d-wire-teal d-dashed" marker-end="url(#m3t)" />
+            </svg>
+            <aside class="notes">
+              The whole architecture. Coral is the thing we're building, teal is the auth
+              machinery, violet is the client. Nothing here is a process you deploy — all three
+              boxes on the left and bottom are proxy rules in one rule set. Push the set and the
+              server changes.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Rule 1 &mdash; the endpoint</h2>
+            <pre style="font-size: 0.45em"><code class="language-yaml" data-trim>
+methods: [GET, POST, DELETE]
+targetUrl: pipeline
+pipeline:
+  name: images MCP endpoint
+  steps:
+    - id: mcp
+      handler: mcp_handler
+      config:
+        serverInfo: { name: bffless-presentations-images, version: 0.1.0 }
+        instructions: "One tool, generate_image: …"
+        tools: [ … ]
+  validators:
+    - type: auth_required
+            </code></pre>
+            <p class="muted" style="font-size: 0.6em">
+              GET and DELETE answer <span class="teal">405</span> &mdash; no sessions, no SSE.
+              An empty <code>auth_required</code> is deliberate.
+            </p>
+            <aside class="notes">
+              One step. serverInfo and instructions are what the client shows the model about the
+              server as a whole. The validator with no config means: anyone signed in may read the
+              menu, and an anonymous caller gets the 401 that kicks off OAuth discovery. That 401
+              is a feature, not an error.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Tools are <em>sibling rules</em></h2>
+            <pre style="font-size: 0.44em"><code class="language-yaml" data-trim>
+tools:
+  - name: generate_image
+    description: "Generate one image with google/nano-banana-2. Costs money
+                  per call — ask the person before calling."
+    inputSchema:
+      type: object
+      properties:
+        prompt:       { type: string }
+        aspect_ratio: { type: string, enum: [16:9, 1:1, …] }
+      required: [prompt]
+    annotations: { readOnlyHint: false, openWorldHint: true }
+    rule: { path: /api/mcp-tools/generate, method: POST }
+            </code></pre>
+            <p class="statement" style="font-size: 0.72em; margin-top: 0.5em">
+              The menu is printed from the kitchen.
+            </p>
+            <aside class="notes">
+              The last line is the whole trick. rule.path points at a rule that already exists in
+              this set — a normal pipeline you could curl. On tools/call, CE invokes it in-process
+              as the caller, with the arguments as the body for POST or the query string for GET.
+              No HTTP hop, no second credential, no drift between the menu and what the backend
+              can actually do.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Rule 2 &mdash; the tool</h2>
+            <svg class="diagram" viewBox="0 0 920 300" role="img" aria-label="The tool rule: an auth gate in front, then prep, then a conditional replicate step, then reply, then respond">
+              <defs>
+                <marker id="m5a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" fill="#4a4a4a" />
+                </marker>
+              </defs>
+
+              <!-- gate -->
+              <rect x="10" y="70" width="200" height="130" rx="12" class="d-box-teal" />
+              <text x="110" y="104" text-anchor="middle" class="d-small d-teal">auth_required</text>
+              <text x="110" y="136" text-anchor="middle" class="d-small">roles: admin</text>
+              <text x="110" y="164" text-anchor="middle" class="d-small">scope</text>
+              <text x="110" y="188" text-anchor="middle" class="d-mono">images:generate</text>
+              <text x="110" y="232" text-anchor="middle" class="d-small d-muted">the gate</text>
+
+              <path d="M210 135 L246 135" class="d-wire" marker-end="url(#m5a)" />
+
+              <rect x="250" y="94" width="140" height="82" rx="10" class="d-box-coral" />
+              <text x="320" y="128" text-anchor="middle" class="d-title">prep</text>
+              <text x="320" y="154" text-anchor="middle" class="d-small d-muted">validate args</text>
+
+              <path d="M390 135 L426 135" class="d-wire" marker-end="url(#m5a)" />
+
+              <rect x="430" y="94" width="150" height="82" rx="10" class="d-box-violet" />
+              <text x="505" y="128" text-anchor="middle" class="d-title">generate</text>
+              <text x="505" y="154" text-anchor="middle" class="d-small d-muted">replicate</text>
+              <text x="505" y="212" text-anchor="middle" class="d-small d-muted">runs only if</text>
+              <text x="505" y="236" text-anchor="middle" class="d-mono d-muted">steps.prep.ok</text>
+
+              <path d="M580 135 L616 135" class="d-wire" marker-end="url(#m5a)" />
+
+              <rect x="620" y="94" width="160" height="82" rx="10" class="d-box" />
+              <text x="700" y="128" text-anchor="middle" class="d-title">reply</text>
+              <text x="700" y="154" text-anchor="middle" class="d-small d-muted">shape the result</text>
+
+              <path d="M780 135 L806 135" class="d-wire" marker-end="url(#m5a)" />
+
+              <rect x="810" y="94" width="104" height="82" rx="10" class="d-box" />
+              <text x="862" y="128" text-anchor="middle" class="d-title">respond</text>
+              <text x="862" y="154" text-anchor="middle" class="d-small d-muted">200 JSON</text>
+
+              <text x="500" y="284" text-anchor="middle" class="d-small d-muted">nothing in this rule is MCP-specific &mdash; it's a pipeline that happens to be on a menu</text>
+            </svg>
+            <aside class="notes">
+              The validator on the sibling is the tool's gate: roles and scopes are enforced here,
+              not in the MCP step. Which means a tool is exactly as secure as the endpoint it
+              already was. Notice you can curl this rule directly with an API key and it behaves
+              identically — the MCP step is just another caller.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Shaping the answer</h2>
+            <div class="cols" style="font-size: 0.62em">
+              <div class="panel">
+                <p><strong class="accent">You shape it</strong></p>
+                <p>Answer a body that already has <code>content[]</code> and it's passed through
+                  verbatim &mdash; text, structuredContent, <code>isError</code>, all yours.</p>
+              </div>
+              <div class="panel">
+                <p><strong class="teal">CE wraps it</strong></p>
+                <p>Answer plain JSON and CE turns it into a text block plus
+                  <code>structuredContent</code> for you.</p>
+              </div>
+            </div>
+            <p class="muted" style="font-size: 0.58em; margin-top: 1em">
+              Failures map cleanly: <code>401 &rarr; auth</code> &middot;
+              <code>403 &rarr; scope</code> &middot; anything else &rarr; a pipeline error.
+            </p>
+            <aside class="notes">
+              Take the pass-through path whenever the wording matters — the text line is the
+              model's instruction sheet. The wrap is there so an existing JSON endpoint becomes a
+              usable tool with zero changes, which is the fastest way to try this on a backend you
+              already have.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Rule 3 &mdash; discovery</h2>
+            <pre style="font-size: 0.46em"><code class="language-yaml" data-trim>
+pathPattern: /.well-known/oauth-protected-resource*
+methods: [GET]
+targetUrl: pipeline
+pipeline:
+  steps:
+    - id: discovery
+      handler: oauth_protected_resource
+      config:
+        resource: /api/mcp
+            </code></pre>
+            <pre style="font-size: 0.42em"><code class="language-json" data-trim>
+{ "resource": "https://mcp.bffless.dev/api/mcp",
+  "authorization_servers": ["https://admin.bffless.dev"],
+  "scopes_supported": ["images:generate"],
+  "bearer_methods_supported": ["header"] }
+            </code></pre>
+            <aside class="notes">
+              One step, one field. Everything else — the host, the admin authorization server, the
+              scope list — is derived. Before CE 0.4.52 you wrote this document by hand in a
+              function_handler with bypassVisibility; that form still works, and the presentations
+              repo carried it for a while, but the answer is upgrade.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Two steps, one pairing</h2>
+            <svg class="diagram" viewBox="0 0 920 340" role="img" aria-label="The discovery step finds the mcp_handler rule by resource path and derives its scopes from the tools' sibling rules; the MCP step reports back which discovery rule serves it; the 401 hint tells the client where the document lives">
+              <defs>
+                <marker id="m6t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" fill="#4fb8a8" />
+                </marker>
+                <marker id="m6a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" fill="#4a4a4a" />
+                </marker>
+              </defs>
+
+              <rect x="10" y="52" width="300" height="184" rx="12" class="d-box-teal" />
+              <text x="32" y="86" class="d-mono d-teal">oauth_protected_resource</text>
+              <text x="32" y="120" class="d-small">resource: <tspan class="d-mono">/api/mcp</tspan></text>
+              <text x="32" y="152" class="d-small">scopes: <tspan class="d-coral">Derive</tspan> <tspan class="d-muted">or Declare</tspan></text>
+              <text x="32" y="184" class="d-small d-muted">resource name, docs URL</text>
+              <text x="32" y="214" class="d-small d-muted">answers /.well-known/…</text>
+
+              <rect x="610" y="52" width="300" height="184" rx="12" class="d-box-coral" />
+              <text x="632" y="86" class="d-mono d-coral">mcp_handler</text>
+              <text x="632" y="120" class="d-small">tools &rarr; sibling rules</text>
+              <text x="632" y="152" class="d-small">their <tspan class="d-mono">requiredScopes</tspan></text>
+              <text x="632" y="184" class="d-small d-muted">names the discovery rule</text>
+              <text x="632" y="214" class="d-small d-muted">it found, in its Server tab</text>
+
+              <path d="M310 112 L606 112" class="d-wire-teal" marker-end="url(#m6t)" />
+              <text x="458" y="100" text-anchor="middle" class="d-small d-teal">finds the server by path</text>
+              <path d="M606 172 L314 172" class="d-wire-teal" marker-end="url(#m6t)" />
+              <text x="458" y="196" text-anchor="middle" class="d-small d-teal">derives its scope list</text>
+
+              <rect x="270" y="270" width="380" height="54" rx="10" class="d-box" />
+              <text x="460" y="294" text-anchor="middle" class="d-small">the 401's <tspan class="d-mono">WWW-Authenticate</tspan> header</text>
+              <text x="460" y="316" text-anchor="middle" class="d-small d-muted">tells the client where the document lives</text>
+              <path d="M160 236 L160 297 L266 297" class="d-wire d-dashed" marker-end="url(#m6a)" />
+              <path d="M760 236 L760 297 L654 297" class="d-wire d-dashed" marker-end="url(#m6a)" />
+            </svg>
+            <aside class="notes">
+              The pairing is two-way and both forms tell you about it. Discovery looks up the
+              set's mcp_handler rule by the resource path and derives scopes from its tools'
+              siblings; the MCP step's Server tab looks for a discovery rule and reports what it
+              will answer. The third leg is the 401 header pointing at the document — that's how a
+              client that knows nothing finds its way in.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Why it bypasses the gate</h2>
+            <p class="statement" style="font-size: 0.8em">
+              The caller has <span class="accent">no credential yet</span>.<br />
+              By definition.
+            </p>
+            <ul style="font-size: 0.68em; margin-top: 0.8em">
+              <li>The bypass applies only on the well-known path&hellip;</li>
+              <li>&hellip;and only when the discovery step is the rule's <span class="teal">first enabled step</span></li>
+            </ul>
+            <p class="muted" style="font-size: 0.58em; margin-top: 0.8em">
+              Migrating means <em>deleting</em> the old hand-written step, not adding the new one after it.
+            </p>
+            <aside class="notes">
+              This is the failure mode worth showing on screen: leave an old function_handler step
+              enabled ahead of the discovery step and the bypass silently switches off. On a
+              private deployment the document then answers the normal gate, the client never sees
+              it, and you get "connected, but no consent page ever appeared" with nothing in the
+              logs that looks wrong.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Scopes are an allowlist</h2>
+            <ul style="font-size: 0.78em">
+              <li><span class="teal">Omitted</span> &rarr; the union of every tool's <code>requiredScopes</code></li>
+              <li><span class="accent">Declared</span> &rarr; the only scopes a client may ever ask for</li>
+              <li>A tool whose scope isn't listed can <em>never</em> be called over OAuth</li>
+            </ul>
+            <p class="muted" style="font-size: 0.62em; margin-top: 1em">
+              Which is how you keep a CI-only scope out of what claude.ai is even allowed to request.
+            </p>
+            <aside class="notes">
+              The one security slide. Derive is the right default — it can't drift. Declare when
+              you deliberately want a narrower surface than the rules imply: the tool still exists,
+              your API key still calls it, but no OAuth client can request the scope it needs, so
+              no consent page can ever grant it.
+            </aside>
+          </section>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- Part 4 — Worked example: generate_image -->
+        <!-- ============================================================ -->
+        <section>
+          <section class="center-slide">
+            <span class="kicker">Part 4</span>
+            <h2>Worked example: <code class="accent">generate_image</code></h2>
+            <p class="muted" style="font-size: 0.6em">
+              The server that draws these slides
+            </p>
+          </section>
+
+          <section>
+            <h2>Why this example</h2>
+            <p class="statement" style="font-size: 0.85em">
+              I wanted Claude to draw my slides.<br />
+              Each call <span class="accent">costs money</span>.<br />
+              Only I should be able to spend it.
+            </p>
+            <aside class="notes">
+              Money plus admin-only is what makes the auth story non-optional, and it's why this
+              example is honest rather than a toy. A weather tool would let me skip the entire
+              second half of the talk.
+            </aside>
+          </section>
+
+          <section>
+            <h2>The repo layout</h2>
+            <pre style="font-size: 0.44em"><code class="language-text" data-trim>
+presentations/
+  .mcp.json                            the URL only — OAuth means no secret
+  .bffless/proxy-rules/images/
+    ruleset.yaml
+    rules/api/mcp/any.rule.yaml        the endpoint
+    rules/api/mcp-tools/generate/post/
+      rule.yaml  prep.fn.js  reply.fn.js  *.fn.test.yaml
+    rules/_custom/well-known/          the discovery document
+  .claude/skills/generate-image/       ask first, then save
+  .github/workflows/deploy-rules.yml   sync on push to main
+            </code></pre>
+            <p class="muted" style="font-size: 0.58em">
+              <code>images</code> is the project's <span class="teal">default set</span> &mdash; so it
+              answers on every deck host, including this one.
+            </p>
+            <aside class="notes">
+              No secrets in the repo: the Replicate token lives in the project's AI Services
+              settings, and the connection is OAuth. Because the set is the project default, the
+              endpoint rides along on rag.bffless.dev and mcp.bffless.dev alike — which is exactly
+              how the hero image on slide one got made.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Refuse before you spend</h2>
+            <pre style="font-size: 0.44em"><code class="language-javascript" data-trim>
+// prep.fn.js — the tool rule's first step
+function handler({ request }) {
+  var body = (request &amp;&amp; request.body) || {}
+  var prompt = typeof body.prompt === 'string' ? body.prompt.trim() : ''
+  var ratio  = body.aspect_ratio || '16:9'
+
+  if (prompt === '') return refuse('prompt is required', '', ratio)
+  if (prompt.length &gt; MAX_PROMPT) return refuse('prompt is too long', '', ratio)
+  if (RATIOS.indexOf(ratio) === -1) return refuse('aspect_ratio must be one of …')
+  // reference images must be https:// …
+
+  return { ok: true, error: '', prompt: prompt, aspectRatio: ratio, images: images }
+}
+            </code></pre>
+            <p class="muted" style="font-size: 0.58em">
+              CE does <em>not</em> check <code>tools/call</code> arguments against your
+              <code>inputSchema</code>. The tool does.
+            </p>
+            <aside class="notes">
+              That last line surprises people. The schema is advice to the model, not a contract
+              the server enforces — models get it wrong, and a hostile client ignores it entirely.
+              Here a refusal skips the replicate step, because its condition is steps.prep.ok, so a
+              bad call costs nothing.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Talk to the model</h2>
+            <pre style="font-size: 0.43em"><code class="language-javascript" data-trim>
+// reply.fn.js — Replicate's output becomes a CallToolResult
+var text =
+  'Image ready (' + prep.aspectRatio + ', ' + MODEL + '). The URL is valid ' +
+  'for about an hour: ' + url +
+  '\nSave it now, e.g. curl -sL -o decks/&lt;deck&gt;/public/images/&lt;slug&gt;.png "' + url + '"'
+
+return { json: JSON.stringify({
+  content: [{ type: 'text', text: text }],
+  structuredContent: { url: url, model: MODEL, aspect_ratio: prep.aspectRatio,
+                       prompt: prep.prompt },
+}) }
+            </code></pre>
+            <p class="statement" style="font-size: 0.7em; margin-top: 0.4em">
+              The prompt engineering lives in the <span class="accent">tool result</span>.
+            </p>
+            <aside class="notes">
+              Descriptions steer whether a tool gets called; the result steers what happens next.
+              "The URL expires in an hour, here is the exact command to save it" is the difference
+              between an agent that keeps the image and one that hands you a dead link tomorrow.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Tests without spending</h2>
+            <pre style="font-size: 0.46em"><code class="language-bash" data-trim>
+npx bffless rules test .bffless/proxy-rules/images   # fixtures per function
+npx bffless rules validate                            # schema + references
+npx bffless rules push --dry-run                      # diff against live
+            </code></pre>
+            <ul style="font-size: 0.68em; margin-top: 0.6em">
+              <li><code>*.fn.test.yaml</code> fixtures cover every refusal path</li>
+              <li>A GitHub Action syncs the set on push to <code>main</code></li>
+            </ul>
+            <p class="muted" style="font-size: 0.58em">
+              The admin UI is the <span class="teal">learning</span> surface; git is the
+              <span class="accent">power-user</span> surface.
+            </p>
+            <aside class="notes">
+              The functions are pure — arguments in, object out — so the whole validation layer is
+              testable with no network and no spend. Worth stressing: rules push overwrites
+              dashboard edits by design, so pick one source of truth per set and stick to it.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Connect from Claude Code</h2>
+            <pre style="font-size: 0.46em"><code class="language-json" data-trim>
+{ "mcpServers": {
+    "images": { "type": "http", "url": "https://mcp.bffless.dev/api/mcp" } } }
+            </code></pre>
+            <ul style="font-size: 0.68em; margin-top: 0.6em">
+              <li>Committed as-is &mdash; <span class="teal">no secret in the file</span></li>
+              <li><code>/mcp</code> &rarr; images &rarr; Authenticate</li>
+              <li>Consent page on admin.bffless.dev, with the
+                <code class="accent">images:generate</code> checkbox</li>
+            </ul>
+            <aside class="notes">
+              Live moment: run /mcp on screen. If the network is hostile, the screenshot fallback
+              is ready. Point out that the whole team can clone the repo and connect as
+              themselves — nobody shares a key, and the tool is still admin-only.
+            </aside>
+          </section>
+
+          <section>
+            <h2>The skill's one rule</h2>
+            <ol style="font-size: 0.7em">
+              <li>Draft the prompt and the aspect ratio</li>
+              <li>Say plainly this is <span class="accent">one paid generation</span>, and wait for a yes</li>
+              <li>Call <code>generate_image</code> &mdash; one image per yes</li>
+              <li><code>curl</code> the URL into <code>public/images/</code> within the hour</li>
+              <li>Report the saved path and the prompt used</li>
+            </ol>
+            <p class="statement" style="font-size: 0.7em; margin-top: 0.8em">
+              A tool's manners belong in a <span class="teal">skill</span>, not in the server.
+            </p>
+            <aside class="notes">
+              The server enforces who may spend; the skill decides how politely. That split
+              matters: rules that live in the server apply to everyone forever, and "ask me first"
+              is a preference, not a security boundary. Also: "make it more blue" is a new prompt
+              and a new yes.
+            </aside>
+          </section>
+
+          <section class="center-slide">
+            <h2>Live</h2>
+            <p class="statement" style="font-size: 0.9em">
+              Let's draw the <span class="accent">last slide</span> of this deck,<br />
+              right now.
+            </p>
+            <p class="muted" style="font-size: 0.6em; margin-top: 1.5em">
+              One call &middot; about ninety seconds
+            </p>
+            <aside class="notes">
+              Budget 90 seconds and keep talking through it: prompt anatomy out loud, then the
+              yes, then the curl, then reload. A pre-generated image sits in public/images/ if
+              Replicate is slow — swap the file, same slide, nobody notices.
+            </aside>
+          </section>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- Part 5 — Beyond tools -->
+        <!-- ============================================================ -->
+        <section>
+          <section class="center-slide">
+            <span class="kicker">Part 5</span>
+            <h2>Beyond tools</h2>
+          </section>
+
+          <section>
+            <h2>Two surfaces, one shape</h2>
+            <div class="cols" style="font-size: 0.62em">
+              <div class="panel">
+                <p><strong class="teal">Admin UI</strong></p>
+                <p>A form editor: Server, Tools, Resources, JSON tabs, and a problems panel that
+                  tells you the sibling rule doesn't exist yet.</p>
+              </div>
+              <div class="panel">
+                <p><strong class="accent">Rules as code</strong></p>
+                <p>YAML in git, fixtures, dry-run diffs, sync on merge.</p>
+              </div>
+            </div>
+            <p class="muted" style="font-size: 0.6em; margin-top: 1em">
+              <code>rules push</code> overwrites dashboard edits <em>by design</em>. Pick one
+              source of truth per set.
+            </p>
+            <aside class="notes">
+              Both surfaces write the same rule. Learn in the UI, where the problems panel catches
+              a mistyped path in a second; move to git when the set matters enough to review. The
+              overwrite is intentional — a set in git is a declaration of what the set should be.
+            </aside>
+          </section>
+
+          <section>
+            <h2><code class="violet">ui://</code> resources</h2>
+            <ul style="font-size: 0.72em">
+              <li>Static documents, or templates with <code>{var}</code> placeholders</li>
+              <li>A listing so the client can browse them</li>
+              <li>A CSP naming what the page may load</li>
+            </ul>
+            <p class="muted" style="font-size: 0.62em; margin-top: 1em">
+              Same <code>mcp_handler</code>, plus resources &mdash; which is how a BFFless app's own
+              page mounts <em>inside</em> claude.ai. That's its own talk.
+            </p>
+            <aside class="notes">
+              Teaser only, ninety seconds. Show the Workflow app's run page rendered inside
+              claude.ai if the recording has it. The point for today: the same rule you just built
+              is the entry point for the interactive surface too — tools were not a special case.
+            </aside>
+          </section>
+
+          <section class="center-slide">
+            <h2>Not the admin MCP server</h2>
+            <p class="statement" style="font-size: 0.78em">
+              <code>admin.&lt;host&gt;/mcp</code> drives the <span class="teal">admin panel</span>.<br />
+              Yours lives on <span class="accent">your alias</span>.<br />
+              Different thing.
+            </p>
+            <aside class="notes">
+              One slide to pre-empt the most common comment. The admin MCP server lets an agent
+              manage projects, deployments and rules for you. The one you just built is your app's
+              API, on your app's host. They share a protocol and nothing else.
+            </aside>
+          </section>
+
+          <section>
+            <h2>When it doesn't work</h2>
+            <table style="font-size: 0.56em; width: 100%">
+              <thead>
+                <tr><th>Symptom</th><th>First check</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>no consent page ever appears</td><td><code>curl</code> the discovery doc with no credential</td></tr>
+                <tr><td><code>invalid_scope</code></td><td>scope missing from <code>scopes_supported</code></td></tr>
+                <tr><td><code>insufficient_scope</code></td><td>reconnect and grant it</td></tr>
+                <tr><td>"declared but no rule answers"</td><td>path, method, is the set attached?</td></tr>
+              </tbody>
+            </table>
+            <p class="muted" style="font-size: 0.58em; margin-top: 0.8em">
+              And a <span class="teal">405</span> on GET <code>/api/mcp</code> is correct, not a bug.
+            </p>
+            <aside class="notes">
+              The unauthenticated curl of the well-known document is the first check every single
+              time — it separates "my server is fine, the client can't find it" from everything
+              else. Nine times in ten it's the visibility bypass or a set that was never attached
+              to the alias.
+            </aside>
+          </section>
+        </section>
+
+        <!-- ============================================================ -->
+        <!-- Part 6 — Recap -->
+        <!-- ============================================================ -->
+        <section>
+          <section class="center-slide">
+            <span class="kicker">Part 6</span>
+            <h2>Recap</h2>
+          </section>
+
+          <section>
+            <h2>Three rules</h2>
+            <svg class="diagram" viewBox="0 0 920 250" role="img" aria-label="Recap: the endpoint rule, the tool sibling rules, and the discovery rule, together with the admin OAuth server">
+              <defs>
+                <marker id="m7a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" fill="#4a4a4a" />
+                </marker>
+              </defs>
+
+              <rect x="20" y="50" width="270" height="120" rx="12" class="d-box-coral" />
+              <text x="155" y="88" text-anchor="middle" class="d-title">the endpoint</text>
+              <text x="155" y="120" text-anchor="middle" class="d-mono">POST /api/mcp</text>
+              <text x="155" y="150" text-anchor="middle" class="d-small d-muted">one mcp_handler step</text>
+
+              <rect x="325" y="50" width="270" height="120" rx="12" class="d-box" />
+              <text x="460" y="88" text-anchor="middle" class="d-title">the tools</text>
+              <text x="460" y="120" text-anchor="middle" class="d-small">sibling rules you already have</text>
+              <text x="460" y="150" text-anchor="middle" class="d-small d-muted">their validator is the gate</text>
+
+              <rect x="630" y="50" width="270" height="120" rx="12" class="d-box-teal" />
+              <text x="765" y="88" text-anchor="middle" class="d-title">discovery</text>
+              <text x="765" y="120" text-anchor="middle" class="d-small">one field: the resource path</text>
+              <text x="765" y="150" text-anchor="middle" class="d-small d-muted">OAuth lives on the admin host</text>
+
+              <path d="M290 110 L321 110" class="d-wire" marker-end="url(#m7a)" />
+              <path d="M595 110 L626 110" class="d-wire" marker-end="url(#m7a)" />
+
+              <text x="460" y="220" text-anchor="middle" class="d-coral">push the set and the menu changes with it</text>
+            </svg>
+            <aside class="notes">
+              No new information here on purpose. If someone remembers one picture from the talk,
+              this is the one.
+            </aside>
+          </section>
+
+          <section>
+            <h2>Auth in one table</h2>
+            <table style="font-size: 0.55em; width: 100%">
+              <thead>
+                <tr><th>Credential</th><th>Roles</th><th>Scopes</th><th>Use it for</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>session cookie</td><td>yes</td><td class="muted">no</td><td>you, in the browser</td></tr>
+                <tr><td><code>X-API-Key</code></td><td>yes</td><td class="muted">no</td><td>scripts, CI, your own agent</td></tr>
+                <tr><td class="accent">OAuth app token</td><td>yes</td><td class="accent">yes</td><td>claude.ai, anyone else</td></tr>
+              </tbody>
+            </table>
+            <p class="muted" style="font-size: 0.58em; margin-top: 1em">
+              <code>scopes_supported</code> is an allowlist: leave one out and it can never be requested.
+            </p>
+            <aside class="notes">
+              Roles say who you are and always apply. Scopes bound what you lent to an app, so they
+              only exist on the delegated path. Getting this straight is most of the debugging.
+            </aside>
+          </section>
+
+          <section class="center-slide">
+            <h2>Go build one</h2>
+            <ul style="display: inline-block; text-align: left; font-size: 0.8em">
+              <li>An endpoint, a tool, a discovery document</li>
+              <li>The tool is a <span class="teal">rule you already have</span></li>
+              <li>The OAuth server is <span class="accent">already running</span></li>
+            </ul>
+            <p class="muted" style="font-size: 0.55em; margin-top: 2em">
+              docs.bffless.dev/features/build-an-mcp-server &middot;
+              github.com/bffless/presentations &middot; mcp.bffless.dev
+            </p>
+            <aside class="notes">
+              Close on the question: what's the first tool you'd hand to Claude? Whatever it is,
+              you probably already have the endpoint.
+            </aside>
+          </section>
+        </section>
+      </div>
+    </div>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

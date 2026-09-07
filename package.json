@@ -6,7 +6,10 @@
   "scripts": {
     "rag:dev": "pnpm --filter rag dev",
     "rag:build": "pnpm --filter rag build",
-    "rag:preview": "pnpm --filter rag preview"
+    "rag:preview": "pnpm --filter rag preview",
+    "mcp:dev": "pnpm --filter mcp dev",
+    "mcp:build": "pnpm --filter mcp build",
+    "mcp:preview": "pnpm --filter mcp preview"
   },
   "packageManager": "pnpm@10.33.0"
 }
