@@ -159,12 +159,19 @@ One step on CE's `oauth_protected_resource` handler (RFC 9728). Nothing about th
 instance is baked in: the handler builds `resource` from the request host, names CE's
 real OAuth issuer, and derives `scopes_supported` from the `requiredScopes` on the
 tools' sibling rules. It answers regardless of deployment visibility — the caller by
-definition has no credential yet — so there is no `bypassVisibility` to remember.
+definition has no credential yet.
+
+CE's gate is an OR (`bypassVisibility || servesProtectedResourceDocument`), so the
+handler alone is enough and `bypassVisibility` is strictly redundant here. We keep it
+anyway: if this deck ever goes private, a 302-to-login on discovery would break the
+OAuth flow before it starts, and one line is cheap insurance on a rule nothing else
+guards.
 
 ```yaml
 pathPattern: /.well-known/oauth-protected-resource*
 targetUrl: pipeline
 order: 32
+bypassVisibility: true
 pipeline:
   name: OAuth protected-resource metadata
   steps:
