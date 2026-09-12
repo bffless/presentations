@@ -13,7 +13,7 @@ The only server-side piece is the `images` proxy rule set (below), the project's
 
 ```bash
 pnpm install
-pnpm --filter <deck> dev      # Vite dev server (rag: 5180, mcp: 5181)
+pnpm --filter <deck> dev      # Vite dev server (rag: 5180, mcp: 5181, workflow-talk: 5182)
 pnpm --filter <deck> build    # → decks/<deck>/dist
 ```
 

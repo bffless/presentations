@@ -1,0 +1,74 @@
+/* workflow-talk: image-led slides. A headline, one generated figure, at most one label line. */
+
+.reveal img.figure {
+  display: block;
+  margin: 0.3em auto 0;
+  max-width: 100%;
+  max-height: 500px;
+  width: auto;
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px #2c3038;
+}
+
+.reveal img.figure.wide {
+  max-height: 380px;
+}
+
+.reveal img.shot {
+  display: block;
+  margin: 0.3em auto 0;
+  max-height: 520px;
+  width: auto;
+  border-radius: 8px;
+  box-shadow: 0 0 0 1px #2c3038;
+}
+
+/* Title over hero art: text pinned to the left edge, a left-to-right wash keeps it clear of the
+   conveyor at any viewport ratio. */
+.reveal .slides section.hero-left {
+  text-align: left;
+  padding-right: 45%;
+}
+
+.reveal .slides section.hero-left::before {
+  content: '';
+  position: absolute;
+  inset: -100vh -40vw;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    rgba(20, 22, 26, 0.96) 0%,
+    rgba(20, 22, 26, 0.92) 50%,
+    rgba(20, 22, 26, 0) 68%
+  );
+}
+
+.reveal .slides section h2 {
+  margin-bottom: 0.2em;
+}
+
+.reveal .label {
+  font-size: 0.55em;
+  color: var(--bff-muted);
+  margin-top: 0.5em;
+}
+
+.reveal .label code {
+  font-size: 0.95em;
+}
+
+/* Placeholder for a screenshot the user still has to record. */
+.reveal .needs-shot {
+  border: 2px dashed var(--bff-coral);
+  border-radius: 10px;
+  padding: 3em 1em;
+  color: var(--bff-muted);
+  font-size: 0.6em;
+}
+
+.reveal .links {
+  list-style: none;
+  margin: 0;
+  font-size: 0.75em;
+}

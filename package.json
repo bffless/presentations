@@ -2,14 +2,17 @@
   "name": "bffless-presentations",
   "private": true,
   "version": "0.0.0",
-  "description": "BFFless presentations monorepo — each deck under decks/* deploys to <deck>.bffless.dev",
+  "description": "BFFless presentations monorepo \u2014 each deck under decks/* deploys to <deck>.bffless.dev",
   "scripts": {
     "rag:dev": "pnpm --filter rag dev",
     "rag:build": "pnpm --filter rag build",
     "rag:preview": "pnpm --filter rag preview",
     "mcp:dev": "pnpm --filter mcp dev",
     "mcp:build": "pnpm --filter mcp build",
-    "mcp:preview": "pnpm --filter mcp preview"
+    "mcp:preview": "pnpm --filter mcp preview",
+    "workflow-talk:dev": "pnpm --filter workflow-talk dev",
+    "workflow-talk:build": "pnpm --filter workflow-talk build",
+    "workflow-talk:preview": "pnpm --filter workflow-talk preview"
   },
   "packageManager": "pnpm@10.33.0"
 }

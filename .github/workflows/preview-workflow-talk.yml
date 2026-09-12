@@ -1,0 +1,54 @@
+name: Preview workflow-talk deck on BFFless
+
+# PR previews for the workflow-talk deck. Any PR that touches decks/workflow-talk (or the shared
+# theme, or this file) builds the deck and deploys it to the shared
+# `workflow-talk-preview` alias, then comments the URL on the PR. The alias is reused:
+# the newest PR build wins, which is fine for one deck iterated by one person.
+on:
+  pull_request:
+    paths:
+      - 'decks/workflow-talk/**'
+      - 'packages/theme/**'
+      - '.github/workflows/preview-workflow-talk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: preview-workflow-talk-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm --filter workflow-talk build
+
+      - name: Deploy preview to BFFless
+        uses: bffless/upload-artifact@v1
+        with:
+          path: decks/workflow-talk/dist
+          api-url: ${{ vars.BFFLESS_URL }}
+          api-key: ${{ secrets.BFFLESS_API_KEY }}
+          alias: workflow-talk-preview
+          description: 'workflow-talk deck preview for PR #${{ github.event.pull_request.number }}'
+          summary-title: workflow-talk deck preview
+          pr-comment: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}

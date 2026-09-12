@@ -1,0 +1,45 @@
+name: Deploy workflow-talk deck to BFFless
+
+# One workflow per deck: pushes that touch decks/workflow-talk (or shared theme, or this
+# file) deploy the deck to the `workflow-talk` alias, served at https://workflow-talk.bffless.dev.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'decks/workflow-talk/**'
+      - 'packages/theme/**'
+      - '.github/workflows/deploy-workflow-talk.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-workflow-talk
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm --filter workflow-talk build
+
+      - name: Deploy to BFFless
+        uses: bffless/upload-artifact@v1
+        with:
+          path: decks/workflow-talk/dist
+          api-url: ${{ vars.BFFLESS_URL }}
+          api-key: ${{ secrets.BFFLESS_API_KEY }}
+          alias: workflow-talk
