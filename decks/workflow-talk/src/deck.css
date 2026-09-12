@@ -14,15 +14,6 @@
   max-height: 380px;
 }
 
-.reveal img.shot {
-  display: block;
-  margin: 0.3em auto 0;
-  max-height: 520px;
-  width: auto;
-  border-radius: 8px;
-  box-shadow: 0 0 0 1px #2c3038;
-}
-
 /* Title over hero art: text pinned to the left edge, a left-to-right wash keeps it clear of the
    conveyor at any viewport ratio. */
 .reveal .slides section.hero-left {
@@ -56,15 +47,6 @@
 
 .reveal .label code {
   font-size: 0.95em;
-}
-
-/* Placeholder for a screenshot the user still has to record. */
-.reveal .needs-shot {
-  border: 2px dashed var(--bff-coral);
-  border-radius: 10px;
-  padding: 3em 1em;
-  color: var(--bff-muted);
-  font-size: 0.6em;
 }
 
 .reveal .links {

@@ -1,28 +1,26 @@
 # Storyboard: "Write YAML, get the UI"
 
-One chaptered video, about 14 minutes. Slides (this deck, `workflow-talk.bffless.dev`) cut in
-between screen recordings. Every slide's talking points are also in its speaker notes (press `S`).
+One chaptered video, about 14 minutes, recorded side by side: this deck
+(`workflow-talk.bffless.dev`) next to the live sites. Every slide's talking points are also in its speaker notes (press `S`).
 
 Source: the capture run `run_01M2BPGAAXCNFKK2Z3GSYC1Y2W` (a 6-minute ramble through Studio,
 workflow.bffless.dev, workflow-implementations and hello). Design:
 `docs/plans/2026-09-12-workflow-deck-design.md`.
 
-## Needs you (can't be captured headlessly, all behind login)
+## Live sites (side by side with the deck)
 
 - **S1**: studio.bffless.dev projects grid, then open an export (title, director's take, final cut).
-- **S6**: workflow.bffless.dev → workflow-studio → "Long recording to published short": start a run through to outputs. Best recorded from a real run; speed up the waiting.
-- **S11**: workflow.j5s.dev → hello → run "Driven hello" (or "Hello workflow").
-- **S12**: the capture run on workflow.bffless.dev (inputs → transcript + sheets outputs), then this storyboard/deck.
-
-Already captured (public GitHub pages, `public/shots/`): `gh-implementations.png`,
-`gh-studio-yaml.png`, `gh-scenes-rule.png`. Handy as B-roll or a fallback if a screen take fails.
+- **S6**: workflow.bffless.dev → workflow-studio → "Long recording to published short": a run through to outputs. Have a finished run ready; speed up any waiting.
+- **S8–S10**: github.com/bffless/workflow-implementations → `workflows/workflow-studio` (the YAML, `rules/scenes/post/`, the repo tree).
+- **S11**: workflow.j5s.dev → hello → "Driven hello".
+- **S12**: the capture run on workflow.bffless.dev (transcript + sheets outputs), then this storyboard.
 
 ---
 
 ## Part 1: The idea (~6 min, for everyone)
 
 ### S1 · Cold open · screen · 0:30
-- **On screen:** Studio projects grid → an export page.
+- **Site:** Studio projects grid → an export page.
 - **Say:** "This is Studio. It's where I make my videos. It's been a while, as you can see."
   Upload a recording; it cuts scenes, a director AI picks the story, I trim, it stitches the
   short and writes the title, description, blog post and cover.
@@ -58,7 +56,7 @@ Already captured (public GitHub pages, `public/shots/`): `gh-implementations.png
 
 ### S6 · Demo: Studio as a workflow · slide `#s6-demo` then screen · 2:00
 - **Image:** `studio-run.jpg` as a 10-second map, then cut to screen.
-- **On screen:** workflow.bffless.dev → workflow-studio → Start a run. Inputs: recordings,
+- **Site:** workflow.bffless.dev → workflow-studio → Start a run. Inputs: recordings,
   direction, cover direction. Watch: audio + transcript per video → contact sheets → frames →
   director's take → clips → **cut-editor island pauses, trim** → stitch → title/description →
   blog → cover. End on the outputs.
@@ -73,7 +71,7 @@ Already captured (public GitHub pages, `public/shots/`): `gh-implementations.png
 
 ### S8 · Fan out, fan in · slide `#s8-fan-out` then screen · 1:30
 - **Image:** `fan-out.jpg` (throttle gate, parallel lanes, rejoin).
-- **On screen:** `studio.workflow.yaml` (`gh-studio-yaml.png` as fallback): `per-video`
+- **Site:** `studio.workflow.yaml`: `per-video`
   (`matrix: video: inputs.recordings`, max-parallel 2), `per-scene` (matrix over
   `needs.director.outputs.scenes`, max-parallel 3, fail-fast false).
 - **Say:** max-parallel is the gate. Fan-in is
@@ -83,7 +81,7 @@ Already captured (public GitHub pages, `public/shots/`): `gh-implementations.png
 ### S9 · Step kinds up close · slides `#s9-pipeline` ↓ `#s9b-island` · 1:30
 - **Images:** `pipeline-cutaway.jpg` (request → prep → violet model → parse → outputs),
   `island-booth.jpg` (conveyor paused at a booth, hands trimming film).
-- **On screen:** `rules/scenes/post/` (`gh-scenes-rule.png`): rule.yaml, prep / parse / collect /
+- **Site:** `rules/scenes/post/`: rule.yaml, prep / parse / collect /
   sweep `.fn.js`, each with a `.fn.test.yaml`. Then `islands/cut-editor`.
 - **Say:** A pipeline step is a proxy rule: prep shapes the request, the model thinks, parse turns
   the answer into typed outputs. An island stops the run and mounts a real React UI; its outputs
@@ -91,14 +89,13 @@ Already captured (public GitHub pages, `public/shots/`): `gh-implementations.png
 
 ### S10 · A workflow is a folder · slide `#s10-repo` then screen · 1:00
 - **Image:** `repo-toolbox.jpg` (drawers: workflows / proxy-rules / islands / scripts → publish press).
-- **On screen:** github.com/bffless/workflow-implementations → workflows/workflow-studio
-  (`gh-implementations.png`).
+- **Site:** github.com/bffless/workflow-implementations → workflows/workflow-studio.
 - **Say:** Tests beside every piece. CI runs `publish-workflow`, which syncs the rules and uploads
   the bundle.
 
 ### S11 · Start with hello · slide `#s11-hello` then screen · 1:00
 - **Image:** `hello-seedling.jpg` (tiny three-station line in front of the giant Studio line).
-- **On screen:** workflow.j5s.dev → hello → Driven hello (form between two echo pipelines).
+- **Site:** workflow.j5s.dev → hello → Driven hello (form between two echo pipelines).
 - **Say:** "Studio is the most complicated one. When you're learning, look at hello." Same machine:
   greet, a person answers, echo. Three workflow files, a handful of rules, two islands.
 
@@ -106,7 +103,7 @@ Already captured (public GitHub pages, `public/shots/`): `gh-implementations.png
 
 ### S12 · This video planned itself · slide `#s12-meta` then screen · 1:30
 - **Image:** `meta-loop.jpg` (mic + laptop → capture machine → transcript + sheets → violet reader → storyboard → back).
-- **On screen:** the capture run's outputs, then this storyboard.
+- **Site:** the capture run's outputs, then this storyboard.
 - **Say:** "I didn't know how to structure this video, so I recorded myself rambling, ran the
   capture workflow on it, and handed the run to Claude over the harness MCP. It asked me
   questions, then planned this storyboard and this deck. It drew the pictures too."
